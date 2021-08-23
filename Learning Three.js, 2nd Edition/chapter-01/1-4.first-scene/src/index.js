@@ -13,6 +13,7 @@ var renderer = new THREE.WebGLRenderer();
 renderer.setClearColor(new THREE.Color(0xeeeeee));
 renderer.setSize(window.innerWidth, window.innerHeight);
 
+// 座標軸
 var axes = new THREE.AxesHelper(20);
 scene.add(axes);
 
