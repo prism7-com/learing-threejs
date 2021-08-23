@@ -1,7 +1,13 @@
 import * as THREE from "three";
-import { ShapeGeometry, Sphere } from "three";
+import Stats from "stats.js";
 
+// 統計情報の追加
+const stats = initStats();
+
+// シーンの作成
 const scene = new THREE.Scene();
+
+// カメラの作成
 const camera = new THREE.PerspectiveCamera(
   45,
   window.innerWidth / window.innerHeight,
@@ -65,4 +71,44 @@ spotLight.castShadow = true;
 scene.add(spotLight);
 
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
-renderer.render(scene, camera);
+
+var step = 0;
+
+// レンダリング
+renderScene();
+
+/**
+ * シーンのレンダリング（アニメーション）
+ */
+function renderScene() {
+  stats.update();
+
+  cube.rotation.x += 0.02;
+  cube.rotation.y += 0.02;
+  cube.rotation.z += 0.02;
+
+  step += 0.04;
+  sphere.position.x = 20 + 10 * Math.cos(step);
+  sphere.position.y = 2 + 10 * Math.abs(Math.sin(step));
+
+  // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
+  requestAnimationFrame(renderScene);
+  renderer.render(scene, camera);
+}
+
+/**
+ * 統計情報の初期化
+ * @returns 初期化済みの統計情報コンポーネント
+ */
+function initStats() {
+  var stats = new Stats();
+  stats.setMode(0);
+
+  stats.domElement.style.position = "absolute";
+  stats.domElement.style.left = "0px";
+  stats.domElement.style.top = "0px";
+
+  document.getElementById("Stats-output").appendChild(stats.domElement);
+
+  return stats;
+}
