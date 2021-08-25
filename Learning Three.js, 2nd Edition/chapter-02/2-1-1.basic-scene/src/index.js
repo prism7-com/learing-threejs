@@ -28,30 +28,6 @@ plane.position.y = 0;
 plane.position.z = 0;
 scene.add(plane);
 
-// // cube
-// const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
-// const cubeMaterial = new THREE.MeshLambertMaterial({
-//   color: 0xff0000,
-// });
-// const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-// cube.castShadow = true;
-// cube.position.x = -4;
-// cube.position.y = 3;
-// cube.position.z = 0;
-// scene.add(cube);
-
-// // sphere
-// const sphereGeometry = new THREE.SphereGeometry(4, 20, 20);
-// const sphereMaterial = new THREE.MeshLambertMaterial({
-//   color: 0x7777ff,
-// });
-// const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-// sphere.castShadow = true;
-// sphere.position.x = 20;
-// sphere.position.y = 4;
-// sphere.position.z = 2;
-// scene.add(sphere);
-
 camera.position.x = -30;
 camera.position.y = 40;
 camera.position.z = 30;
