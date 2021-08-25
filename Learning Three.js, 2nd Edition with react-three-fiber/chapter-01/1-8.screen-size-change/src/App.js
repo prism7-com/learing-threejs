@@ -1,6 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stats } from "@react-three/drei";
+import { useControls } from "leva";
 
 function Plane(props) {
   const ref = useRef();
@@ -20,10 +21,14 @@ function Plane(props) {
 
 function Cube(props) {
   const ref = useRef();
+  const ctrl = useControls({
+    rotationSpeed: { value: 0.02, min: 0, max: 0.5, step: 0.01 },
+  });
+
   useFrame(() => {
-    ref.current.rotation.x += props.speed;
-    ref.current.rotation.y += props.speed;
-    ref.current.rotation.z += props.speed;
+    ref.current.rotation.x += ctrl.rotationSpeed;
+    ref.current.rotation.y += ctrl.rotationSpeed;
+    ref.current.rotation.z += ctrl.rotationSpeed;
   });
   return (
     <mesh ref={ref} castShadow position={[-4, 3, 0]} {...props}>
@@ -35,9 +40,12 @@ function Cube(props) {
 
 function Sphere(props) {
   const ref = useRef();
+  const ctrl = useControls({
+    bouncingSpeed: { value: 0.03, min: 0, max: 0.5, step: 0.01 },
+  });
   let step = 0;
   useFrame(() => {
-    step += props.speed;
+    step += ctrl.bouncingSpeed;
     ref.current.position.x = 20 + 10 * Math.cos(step);
     ref.current.position.y = 2 + 10 * Math.abs(Math.sin(step));
   });
@@ -51,11 +59,6 @@ function Sphere(props) {
 }
 
 const App = () => {
-  const [opts] = useState({
-    rotationSpeed: 0.02,
-    bouncingSpeed: 0.03,
-  });
-
   return (
     <>
       <Stats />
@@ -74,8 +77,8 @@ const App = () => {
         <spotLight color={0xffffff} position={[-20, 30, -5]} castShadow />
         <axesHelper args={20} />
         <Plane />
-        <Cube speed={opts.rotationSpeed} />
-        <Sphere speed={opts.bouncingSpeed} />
+        <Cube />
+        <Sphere />
       </Canvas>
     </>
   );
