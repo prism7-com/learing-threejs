@@ -1,9 +1,8 @@
 import * as THREE from "three";
 import Stats from "stats.js";
 import * as dat from "dat.gui";
-import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry";
 import { SceneUtils } from "three/examples/jsm/utils/SceneUtils";
-import { ParametricGeometries } from "three/examples/jsm/geometries/ParametricGeometries";
+import { Face3 } from "three/examples/jsm/deprecated/Geometry";
 
 // 統計情報の追加
 const stats = initStats();
@@ -13,10 +12,10 @@ const scene = new THREE.Scene();
 
 // カメラの作成
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.x = -50;
-camera.position.y = 30;
+camera.position.x = -20;
+camera.position.y = 25;
 camera.position.z = 20;
-camera.lookAt(new THREE.Vector3(-10, 0, 0));
+camera.lookAt(new THREE.Vector3(5, 0, 0));
 scene.add(camera);
 
 // レンダラ
@@ -37,93 +36,110 @@ plane.position.z = 0;
 scene.add(plane);
 
 // ambient light
-var ambientLight = new THREE.AmbientLight(0x090909);
-scene.add(ambientLight);
+// var ambientLight = new THREE.AmbientLight(0x494949);
+// scene.add(ambientLight);
 
 // spotlight
 const spotLight = new THREE.SpotLight(0xffffff);
-spotLight.position.set(-25, 25, 32);
+spotLight.position.set(-20, 30, 5);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
-// Geometry Settings
-addGeometries(scene);
-
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
-function addGeometries(scene) {
-  const geoms = [];
+// Mesh
+const vertices = [
+  new THREE.Vector3(1, 3, 1),
+  new THREE.Vector3(1, 3, -1),
+  new THREE.Vector3(1, -1, 1),
+  new THREE.Vector3(1, -1, -1),
+  new THREE.Vector3(-1, 3, -1),
+  new THREE.Vector3(-1, 3, 1),
+  new THREE.Vector3(-1, -1, -1),
+  new THREE.Vector3(-1, -1, 1),
+];
 
-  // 円柱/シリンダー
-  geoms.push(new THREE.CylinderGeometry(1, 4, 4));
+const faces = [
+  new Face3(0, 2, 1),
+  new Face3(2, 3, 1),
+  new Face3(4, 6, 5),
+  new Face3(6, 7, 5),
+  new Face3(4, 5, 1),
+  new Face3(5, 0, 1),
+  new Face3(7, 6, 2),
+  new Face3(6, 3, 2),
+  new Face3(5, 7, 0),
+  new Face3(7, 2, 0),
+  new Face3(1, 3, 4),
+  new Face3(3, 6, 4),
+];
 
-  // 直方体
-  geoms.push(new THREE.BoxGeometry(2, 2, 2));
+const geom = new THREE.BufferGeometry();
+geom.vertices = vertices;
+geom.faces = faces;
+geom.computeFaceNormals();
 
-  // 球/スフィア
-  geoms.push(new THREE.SphereGeometry(2));
+const materials = [
+  new THREE.MeshLambertMaterial({ opacity: 0.6, color: 0x44ff44, transparent: true }),
+  new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true }),
+];
 
-  // 正二十面体
-  geoms.push(new THREE.IcosahedronGeometry(4));
+const mesh = SceneUtils.createMultiMaterialObject(geom, materials);
+mesh.children.forEach(function (e) {
+  e.castShadow = true;
+});
+scene.add(mesh);
 
-  // 凸面体
-  const points = [
-    new THREE.Vector3(2, 2, 2),
-    new THREE.Vector3(2, 2, -2),
-    new THREE.Vector3(-2, 2, -2),
-    new THREE.Vector3(-2, 2, 2),
-    new THREE.Vector3(2, -2, 2),
-    new THREE.Vector3(2, -2, -2),
-    new THREE.Vector3(-2, -2, -2),
-    new THREE.Vector3(-2, -2, 2),
-  ];
-  geoms.push(new ConvexGeometry(points));
+// GUI
+function addControl(x, y, z) {
+  const controls = new (function () {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  })();
+  return controls;
+}
 
-  // 旋盤/回転体
-  let pts = [];
-  let detail = 0.1;
-  let radius = 3;
-  for (let angle = 0.0; angle < Math.PI; angle += detail) {
-    pts.push(new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0));
-  }
-  geoms.push(new THREE.LatheGeometry(pts, 12));
+const controlPoints = [];
+controlPoints.push(addControl(3, 5, 3));
+controlPoints.push(addControl(3, 5, 0));
+controlPoints.push(addControl(3, 0, 3));
+controlPoints.push(addControl(3, 0, 0));
+controlPoints.push(addControl(0, 5, 0));
+controlPoints.push(addControl(0, 5, 3));
+controlPoints.push(addControl(0, 0, 0));
+controlPoints.push(addControl(0, 0, 3));
 
-  // 正八面体
-  geoms.push(new THREE.OctahedronGeometry(3));
+var gui = new dat.GUI();
+gui.add(
+  new (function () {
+    this.clone = function () {
+      const clonedGeometry = mesh.children[0].geometry.clone();
+      const materials = [
+        new THREE.MeshLambertMaterial({ opacity: 0.6, color: 0xff44ff, transparent: true }),
+        new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true }),
+      ];
 
-  // パラメトリック（メビウスの輪）
-  geoms.push(new THREE.ParametricGeometry(ParametricGeometries.mobius3d, 20, 10));
+      const mesh2 = SceneUtils.createMultiMaterialObject(clonedGeometry, materials);
+      mesh2.children.forEach(function (e) {
+        e.castShadow = true;
+      });
 
-  // 正四面体
-  geoms.push(new THREE.TetrahedronGeometry(4));
+      mesh2.translateX(5);
+      mesh2.translateZ(5);
+      mesh2.name = "clone";
+      scene.remove(scene.getObjectByName("clone"));
+      scene.add(mesh2);
+    };
+  })(),
+  "clone"
+);
 
-  //　トーラス（ドーナッツ）
-  geoms.push(new THREE.TorusGeometry(3, 1, 10, 10));
-
-  //　トーラス結び目
-  geoms.push(new THREE.TorusKnotGeometry(3, 0.5, 50, 20));
-
-  // ジオメトリへのマテリアルの設定と配置
-  let j = 0;
-  for (let i = 0; i < geoms.length; i++) {
-    let materials = [
-      new THREE.MeshPhongMaterial({ color: Math.random() * 0xffffff, flatShading: true }),
-      new THREE.MeshBasicMaterial({ color: Math.random() * 0x000000, wireframe: true }),
-    ];
-    let mesh = SceneUtils.createMultiMaterialObject(geoms[i], materials);
-    mesh.traverse(function (e) {
-      e.castShadow = true;
-    });
-
-    mesh.position.x = -24 + (i % 4) * 12;
-    mesh.position.y = 4;
-    mesh.position.z = -8 + j * 12;
-
-    if ((i + 1) % 4 === 0) {
-      j++;
-    }
-    scene.add(mesh);
-  }
+for (let i = 0; i < 8; i++) {
+  let f1 = gui.addFolder("Vertices " + (i + 1));
+  f1.add(controlPoints[i], "x", -10, 10);
+  f1.add(controlPoints[i], "y", -10, 10);
+  f1.add(controlPoints[i], "z", -10, 10);
 }
 
 // レンダリング
@@ -134,6 +150,14 @@ renderScene();
  */
 function renderScene() {
   stats.update();
+
+  mesh.children.forEach(function (e) {
+    for (let i = 0; i < 8; i++) {
+      e.geometry.vertices[i].set(controlPoints[i].x, controlPoints[i].y, controlPoints[i].z);
+    }
+    e.geometry.verticesNeedUpdate = true;
+    e.geometry.computeFaceNormals();
+  });
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
