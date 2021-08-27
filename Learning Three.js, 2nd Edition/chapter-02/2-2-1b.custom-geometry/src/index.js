@@ -48,36 +48,28 @@ scene.add(spotLight);
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
 // Mesh
-const vertices = [
-  new THREE.Vector3(1, 3, 1),
-  new THREE.Vector3(1, 3, -1),
-  new THREE.Vector3(1, -1, 1),
-  new THREE.Vector3(1, -1, -1),
-  new THREE.Vector3(-1, 3, -1),
-  new THREE.Vector3(-1, 3, 1),
-  new THREE.Vector3(-1, -1, -1),
-  new THREE.Vector3(-1, -1, 1),
-];
-
-const faces = [
-  new Face3(0, 2, 1),
-  new Face3(2, 3, 1),
-  new Face3(4, 6, 5),
-  new Face3(6, 7, 5),
-  new Face3(4, 5, 1),
-  new Face3(5, 0, 1),
-  new Face3(7, 6, 2),
-  new Face3(6, 3, 2),
-  new Face3(5, 7, 0),
-  new Face3(7, 2, 0),
-  new Face3(1, 3, 4),
-  new Face3(3, 6, 4),
-];
-
 const geom = new THREE.BufferGeometry();
-geom.vertices = vertices;
-geom.faces = faces;
-geom.computeFaceNormals();
+const verticesPositions = [
+  [1, 3, 1],
+  [1, 3, -1],
+  [1, -1, 1],
+  [1, -1, -1],
+  [-1, 3, -1],
+  [-1, 3, 1],
+  [-1, -1, -1],
+  [-1, -1, 1],
+];
+const vertices = new Float32Array(verticesPositions.length * 3);
+for (let i = 0; i < verticesPositions.length; i++) {
+  vertices[i * 3 + 0] = verticesPositions[i][0];
+  vertices[i * 3 + 1] = verticesPositions[i][1];
+  vertices[i * 3 + 2] = verticesPositions[i][2];
+}
+const indeces = new Uint16Array([0, 2, 1, 2, 3, 1, 4, 6, 5, 6, 7, 5, 4, 5, 1, 5, 0, 1, 7, 6, 2, 6, 3, 2, 5, 7, 0, 7, 2, 0, 1, 3, 4, 3, 6, 4]);
+
+geom.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+geom.setAttribute("index", new THREE.BufferAttribute(indeces, 1));
+geom.computeVertexNormals();
 
 const materials = [
   new THREE.MeshLambertMaterial({ opacity: 0.6, color: 0x44ff44, transparent: true }),
@@ -153,10 +145,12 @@ function renderScene() {
 
   mesh.children.forEach(function (e) {
     for (let i = 0; i < 8; i++) {
-      e.geometry.vertices[i].set(controlPoints[i].x, controlPoints[i].y, controlPoints[i].z);
+      e.geometry.attributes.position.setX(i, controlPoints[i].x);
+      e.geometry.attributes.position.setY(i, controlPoints[i].y);
+      e.geometry.attributes.position.setZ(i, controlPoints[i].z);
     }
-    e.geometry.verticesNeedUpdate = true;
-    e.geometry.computeFaceNormals();
+    e.geometry.attributes.position.needsUpdate = true;
+    e.geometry.computeVertexNormals();
   });
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
