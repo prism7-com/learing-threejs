@@ -12,9 +12,9 @@ const scene = new THREE.Scene();
 
 // カメラの作成
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.x = -20;
-camera.position.y = 25;
-camera.position.z = 20;
+camera.position.x = -30;
+camera.position.y = 40;
+camera.position.z = 30;
 camera.lookAt(new THREE.Vector3(5, 0, 0));
 scene.add(camera);
 
@@ -36,103 +36,95 @@ plane.position.z = 0;
 scene.add(plane);
 
 // ambient light
-// var ambientLight = new THREE.AmbientLight(0x494949);
-// scene.add(ambientLight);
+var ambientLight = new THREE.AmbientLight(0x0c0c0c);
+scene.add(ambientLight);
 
 // spotlight
 const spotLight = new THREE.SpotLight(0xffffff);
-spotLight.position.set(-20, 30, 5);
+spotLight.position.set(-20, 30, 10);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
-// Mesh
-const geom = new THREE.BufferGeometry();
-const verticesPositions = [
-  [1, 3, 1],
-  [1, 3, -1],
-  [1, -1, 1],
-  [1, -1, -1],
-  [-1, 3, -1],
-  [-1, 3, 1],
-  [-1, -1, -1],
-  [-1, -1, 1],
-];
-const vertices = new Float32Array(verticesPositions.length * 3);
-for (let i = 0; i < verticesPositions.length; i++) {
-  vertices[i * 3 + 0] = verticesPositions[i][0];
-  vertices[i * 3 + 1] = verticesPositions[i][1];
-  vertices[i * 3 + 2] = verticesPositions[i][2];
-}
-const indeces = new Uint16Array([0, 2, 1, 2, 3, 1, 4, 6, 5, 6, 7, 5, 4, 5, 1, 5, 0, 1, 7, 6, 2, 6, 3, 2, 5, 7, 0, 7, 2, 0, 1, 3, 4, 3, 6, 4]);
+// Cube
+const controls = new (function () {
+  this.scaleX = 1;
+  this.scaleY = 1;
+  this.scaleZ = 1;
 
-geom.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
-geom.setAttribute("index", new THREE.BufferAttribute(indeces, 1));
-geom.computeVertexNormals();
+  this.positionX = 0;
+  this.positionY = 0;
+  this.positionZ = 0;
 
-const materials = [
-  new THREE.MeshLambertMaterial({ opacity: 0.6, color: 0x44ff44, transparent: true }),
-  new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true }),
-];
+  this.rotationX = 0;
+  this.rotationY = 0;
+  this.rotationZ = 0;
 
-const mesh = SceneUtils.createMultiMaterialObject(geom, materials);
-mesh.children.forEach(function (e) {
-  e.castShadow = true;
-});
-scene.add(mesh);
+  this.scale = 1;
+
+  this.translateX = 0;
+  this.translateY = 0;
+  this.translateZ = 0;
+
+  this.visible = true;
+
+  this.translate = function () {
+    cube.translateX(controls.translateX);
+    cube.translateY(controls.translateY);
+    cube.translateZ(controls.translateZ);
+
+    this.positionX = cube.position.x;
+    this.positionY = cube.position.y;
+    this.positionZ = cube.position.z;
+  };
+})();
+
+const matelial = new THREE.MeshLambertMaterial({ color: 0x44ff44 });
+const geom = new THREE.BoxGeometry(5, 8, 3);
+const cube = new THREE.Mesh(geom, matelial);
+cube.position.y = 4;
+cube.castShadow = true;
+scene.add(cube);
 
 // GUI
-function addControl(x, y, z) {
-  const controls = new (function () {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-  })();
-  return controls;
-}
+const gui = new dat.GUI();
 
-const controlPoints = [];
-controlPoints.push(addControl(3, 5, 3));
-controlPoints.push(addControl(3, 5, 0));
-controlPoints.push(addControl(3, 0, 3));
-controlPoints.push(addControl(3, 0, 0));
-controlPoints.push(addControl(0, 5, 0));
-controlPoints.push(addControl(0, 5, 3));
-controlPoints.push(addControl(0, 0, 0));
-controlPoints.push(addControl(0, 0, 3));
+const guiScale = gui.addFolder("scale");
+guiScale.add(controls, "scaleX", 0, 5);
+guiScale.add(controls, "scaleY", 0, 5);
+guiScale.add(controls, "scaleZ", 0, 5);
 
-var gui = new dat.GUI();
-gui.add(
-  new (function () {
-    this.clone = function () {
-      const clonedGeometry = mesh.children[0].geometry.clone();
-      const materials = [
-        new THREE.MeshLambertMaterial({ opacity: 0.6, color: 0xff44ff, transparent: true }),
-        new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true }),
-      ];
+const guiPosition = gui.addFolder("potision");
+const contX = guiPosition.add(controls, "positionX", -10, 10);
+const contY = guiPosition.add(controls, "positionY", -4, 20);
+const contZ = guiPosition.add(controls, "positionZ", -10, 10);
 
-      const mesh2 = SceneUtils.createMultiMaterialObject(clonedGeometry, materials);
-      mesh2.children.forEach(function (e) {
-        e.castShadow = true;
-      });
+contX.listen();
+contX.onChange(function () {
+  cube.position.x = controls.positionX;
+});
+contY.listen();
+contY.onChange(function () {
+  cube.position.y = controls.positionY;
+});
+contZ.listen();
+contZ.onChange(function () {
+  cube.position.z = controls.positionZ;
+});
 
-      mesh2.translateX(5);
-      mesh2.translateZ(5);
-      mesh2.name = "clone";
-      scene.remove(scene.getObjectByName("clone"));
-      scene.add(mesh2);
-    };
-  })(),
-  "clone"
-);
+const guiRotation = gui.addFolder("rotation");
+guiRotation.add(controls, "rotationX", -4, 4);
+guiRotation.add(controls, "rotationY", -4, 4);
+guiRotation.add(controls, "rotationZ", -4, 4);
 
-for (let i = 0; i < 8; i++) {
-  let f1 = gui.addFolder("Vertices " + (i + 1));
-  f1.add(controlPoints[i], "x", -10, 10);
-  f1.add(controlPoints[i], "y", -10, 10);
-  f1.add(controlPoints[i], "z", -10, 10);
-}
+const guiTranslate = gui.addFolder("translate");
+guiTranslate.add(controls, "translateX", -10, 10);
+guiTranslate.add(controls, "translateY", -10, 10);
+guiTranslate.add(controls, "translateZ", -10, 10);
+guiTranslate.add(controls, "translate");
+
+gui.add(controls, "visible");
 
 // レンダリング
 renderScene();
@@ -143,15 +135,12 @@ renderScene();
 function renderScene() {
   stats.update();
 
-  mesh.children.forEach(function (e) {
-    for (let i = 0; i < 8; i++) {
-      e.geometry.attributes.position.setX(i, controlPoints[i].x);
-      e.geometry.attributes.position.setY(i, controlPoints[i].y);
-      e.geometry.attributes.position.setZ(i, controlPoints[i].z);
-    }
-    e.geometry.attributes.position.needsUpdate = true;
-    e.geometry.computeVertexNormals();
-  });
+  cube.visible = controls.visible;
+  cube.rotation.x = controls.rotationX;
+  cube.rotation.y = controls.rotationY;
+  cube.rotation.z = controls.rotationZ;
+
+  cube.scale.set(controls.scaleX, controls.scaleY, controls.scaleZ);
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
