@@ -45,10 +45,9 @@ document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
 // Cube
 const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
+const cubeMatelial = new THREE.MeshLambertMaterial({ color: 0x00ee22 });
 for (let j = 0; j < planeGeometry.parameters.height / 5; j++) {
   for (let i = 0; i < planeGeometry.parameters.width / 5; i++) {
-    const rnd = Math.random() * 0.75 + 0.25;
-    const cubeMatelial = new THREE.MeshLambertMaterial({ color: new THREE.Color(rnd, 0, 0) });
     const cube = new THREE.Mesh(cubeGeometry, cubeMatelial);
     cube.position.z = -(planeGeometry.parameters.height / 2) + 2 + j * 5;
     cube.position.x = -(planeGeometry.parameters.width / 2) + 2 + i * 5;
@@ -56,6 +55,11 @@ for (let j = 0; j < planeGeometry.parameters.height / 5; j++) {
     scene.add(cube);
   }
 }
+
+// 注視点
+const lookAtGeom = new THREE.SphereGeometry(2);
+const lookAtMesh = new THREE.Mesh(lookAtGeom, new THREE.MeshLambertMaterial({ color: 0xff0000 }));
+scene.add(lookAtMesh);
 
 // GUI
 const controls = new (function () {
@@ -86,11 +90,20 @@ gui.add(controls, "perspective").listen();
 // レンダリング
 renderScene();
 
+let step = 0;
+
 /**
  * シーンのレンダリング（アニメーション）
  */
 function renderScene() {
   stats.update();
+
+  step += 0.02;
+  if (camera instanceof THREE.Camera) {
+    let x = 10 + 100 * Math.sin(step);
+    camera.lookAt(new THREE.Vector3(x, 10, 0));
+    lookAtMesh.position.copy(new THREE.Vector3(x, 10, 0));
+  }
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
