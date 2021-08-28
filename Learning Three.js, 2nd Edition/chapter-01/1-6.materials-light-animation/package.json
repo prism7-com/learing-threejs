@@ -4,10 +4,12 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "@types/stats.js": "^0.17.0",
+    "@types/three": "^0.131.0",
     "stats.js": "^0.17.0",
     "three": "^0.131.3"
   },
   "scripts": {
-    "start": "parcel src/index.html"
+    "start": "parcel serve src/index.html --port 3000"
   }
 }
