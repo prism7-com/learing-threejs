@@ -2,7 +2,6 @@ import * as THREE from "three";
 import Stats from "stats.js";
 import * as dat from "dat.gui";
 import { SceneUtils } from "three/examples/jsm/utils/SceneUtils";
-import { Face3 } from "three/examples/jsm/deprecated/Geometry";
 
 // 統計情報の追加
 const stats = initStats();
