@@ -11,3 +11,7 @@ parcel src/index.html
 ## preview
 
 ![preview](document/screenshot.png)
+
+## error
+
+I have WebGL error.

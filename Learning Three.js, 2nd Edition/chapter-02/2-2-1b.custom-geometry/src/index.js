@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import Stats from "stats.js";
 import * as dat from "dat.gui";
-import { SceneUtils } from "three/examples/jsm/utils/SceneUtils";
+import { createMultiMaterialObject } from "three/examples/jsm/utils/SceneUtils";
 
 // 統計情報の追加
 const stats = initStats();
@@ -75,7 +75,7 @@ const materials = [
   new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true }),
 ];
 
-const mesh = SceneUtils.createMultiMaterialObject(geom, materials);
+const mesh = createMultiMaterialObject(geom, materials);
 mesh.children.forEach(function (e) {
   e.castShadow = true;
 });

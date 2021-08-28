@@ -9,7 +9,7 @@
     "@types/three": "^0.131.0",
     "dat.gui": "^0.7.7",
     "stats.js": "^0.17.0",
-    "three": "^0.131.3"
+    "three": "^0.132.2"
   },
   "scripts": {
     "start": "parcel serve src/index.html --port 3000"
