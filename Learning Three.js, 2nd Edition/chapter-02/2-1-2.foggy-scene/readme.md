@@ -7,3 +7,7 @@ yarn -y init
 
 parcel src/index.html
 ```
+
+## preview
+
+![preview](document/screenshot.png)
