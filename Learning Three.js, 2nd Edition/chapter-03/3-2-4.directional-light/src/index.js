@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import Stats from "stats.js";
 import * as dat from "dat.gui";
-import { Sphere } from "three";
 
 // 統計情報の追加
 const stats = initStats();
@@ -22,7 +21,6 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setClearColor(new THREE.Color(0xeeeeee));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFShadowMap;
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
 // 床面
