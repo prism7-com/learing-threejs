@@ -1,7 +1,10 @@
 import * as THREE from "three";
 import Stats from "stats.js";
 import * as dat from "dat.gui";
-import image from "../../../assets/textures/ground/grasslight-big.jpg";
+import { Lensflare, LensflareElement } from "three/examples/jsm/objects/Lensflare";
+import imagePlane from "../../../assets/textures/ground/grasslight-big.jpg";
+import imageLens1 from "../../../assets/textures/lensflare/lensflare0.png";
+import imageLens2 from "../../../assets/textures/lensflare/lensflare3.png";
 
 // 統計情報の追加
 const stats = initStats();
@@ -27,13 +30,13 @@ document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
 // 床面のテクスチャ
 const textureLoader = new THREE.TextureLoader();
-const textureGrass = textureLoader.load(image);
+const textureGrass = textureLoader.load(imagePlane);
 textureGrass.wrapS = THREE.RepeatWrapping;
 textureGrass.wrapT = THREE.RepeatWrapping;
 textureGrass.repeat.set(4, 4);
 
 // 床面
-const planeGeometry = new THREE.PlaneGeometry(600, 200, 20, 20);
+const planeGeometry = new THREE.PlaneGeometry(1000, 200, 20, 20);
 const planeMaterial = new THREE.MeshLambertMaterial({ map: textureGrass });
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.receiveShadow = true;
@@ -85,39 +88,46 @@ const directionalLight = new THREE.DirectionalLight(directionalLightColor);
 directionalLight.position.set(30, 10, -50);
 directionalLight.castShadow = true;
 directionalLight.target = plane;
+directionalLight.distance = 0;
 directionalLight.shadow.camera.near = 0.1;
-directionalLight.shadow.camera.far = 200;
-directionalLight.shadow.camera.left = -50;
-directionalLight.shadow.camera.right = 50;
-directionalLight.shadow.camera.top = 50;
-directionalLight.shadow.camera.bottom = -50;
-directionalLight.shadow.mapSize.height = 1024;
-directionalLight.shadow.mapSize.width = 1024;
+directionalLight.shadow.camera.far = 100;
+directionalLight.shadow.camera.fov = 50;
+directionalLight.shadow.camera.left = -100;
+directionalLight.shadow.camera.right = 100;
+directionalLight.shadow.camera.top = 100;
+directionalLight.shadow.camera.bottom = -100;
+directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.mapSize.width = 2048;
 scene.add(directionalLight);
+
+// lensFlare
+const textureFlare1 = textureLoader.load(imageLens1);
+const textureFlare2 = textureLoader.load(imageLens2);
+const flareColor = new THREE.Color(0xffaacc);
+const lensFlare = new Lensflare();
+lensFlare.addElement(new LensflareElement(textureFlare1, 350, 0.0, flareColor));
+lensFlare.addElement(new LensflareElement(textureFlare2, 60, 0.6));
+lensFlare.addElement(new LensflareElement(textureFlare2, 70, 0.7));
+lensFlare.addElement(new LensflareElement(textureFlare2, 120, 0.9));
+lensFlare.addElement(new LensflareElement(textureFlare2, 70, 1.0));
+lensFlare.position.copy(directionalLight.position);
+scene.add(lensFlare);
 
 // GUI
 const controls = new (function () {
   this.rotationSpeed = 0.02;
   this.bouncingSpeed = 0.03;
-  this.hemisphere = true;
-  this.color = 0x00ff00;
-  this.skyColor = 0x0000ff;
-  this.intensity = 0.5;
+  this.ambientColor = ambiColor;
+  this.directionalLightColor = directionalLightColor;
+  this.intensity = 0.1;
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "hemisphere").onChange(function (e) {
-  if (!e) {
-    hemiLight.intensity = 0;
-  } else {
-    hemiLight.intensity = controls.intensity;
-  }
+gui.addColor(controls, "ambientColor").onChange(function (e) {
+  ambientLight.color = new THREE.Color(e);
 });
-gui.addColor(controls, "color").onChange(function (e) {
-  hemiLight.groundColor = new THREE.Color(e);
-});
-gui.addColor(controls, "skyColor").onChange(function (e) {
-  hemiLight.color = new THREE.Color(e);
+gui.addColor(controls, "directionalLightColor").onChange(function (e) {
+  directionalLight.color = new THREE.Color(e);
 });
 gui.add(controls, "intensity", 0, 5).onChange(function (e) {
   directionalLight.intensity = e;
