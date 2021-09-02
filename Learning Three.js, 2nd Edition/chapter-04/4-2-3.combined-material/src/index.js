@@ -58,7 +58,7 @@ const controls = new (function () {
       blending: THREE.MultiplyBlending,
     });
     const cube = SceneUtils.createMultiMaterialObject(cubeGeometry, [colorMaterial, cubeMaterial]);
-    cube.children[1].scale.set(0.99, 0.99, 0.99);
+    cube.children[1].scale.set(0.99, 0.99, 0.99); // Zファイティング対策
     cube.castShadow = true;
     cube.position.x = -60 + Math.round(Math.random() * 100);
     cube.position.y = Math.round(Math.random() * 10);
