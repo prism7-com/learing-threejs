@@ -11,10 +11,10 @@ const scene = new THREE.Scene();
 
 // [Camera]カメラの作成
 let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.x = -50;
-camera.position.y = 40;
-camera.position.z = 50;
-camera.lookAt(scene.position);
+camera.position.x = -20;
+camera.position.y = 30;
+camera.position.z = 40;
+camera.lookAt(new THREE.Vector3(10, 0, 0));
 scene.add(camera);
 
 // [Renderer]レンダラ
@@ -26,7 +26,7 @@ document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
 // [Mesh]床面
 const groundGeometry = new THREE.PlaneGeometry(100, 100, 4, 4);
-const ground = new THREE.Mesh(groundGeometry, new THREE.MeshBasicMaterial({ color: 0x777777 }));
+const ground = new THREE.Mesh(groundGeometry, new THREE.MeshBasicMaterial({ color: 0x555555 }));
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = -20;
 ground.name = "Ground";
@@ -36,22 +36,11 @@ scene.add(ground);
 const sphereGeometry = new THREE.SphereGeometry(14, 20, 20);
 const cubeGeometry = new THREE.BoxGeometry(15, 15, 15);
 const planeGeometry = new THREE.PlaneGeometry(14, 14, 4, 4);
-const meshMatelial = new THREE.MeshNormalMaterial();
+const meshMatelial = new THREE.MeshLambertMaterial({ color: 0x7777ff });
 
 const sphere = new THREE.Mesh(sphereGeometry, meshMatelial);
 const cube = new THREE.Mesh(cubeGeometry, meshMatelial);
 const plane = new THREE.Mesh(planeGeometry, meshMatelial);
-
-// NOTICE! Three.js r125 removed support for Geometry.
-// for (let f = 0, fl = sphere.geometry.faces.length; f < fl; f++) {
-//   const face = sphere.geometry.faces[f];
-//   const centroid = new THREE.Vector3(0, 0, 0);
-//   centroid.add(sphere.geometry.vertices[face.a]);
-//   centroid.add(sphere.geometry.vertices[face.b]);
-//   centroid.add(sphere.geometry.vertices[face.c]);
-//   centroid.divideScalar(3);
-//   const arrow = new THREE.ArrowHelper(face.normal, centroid, 2, 0x3333ff, 0.5, 0.5);
-// }
 
 sphere.position.x = 0;
 sphere.position.y = 3;
@@ -73,7 +62,7 @@ scene.add(ambientLight);
 
 // [Light]spot light
 const spotLight = new THREE.SpotLight(0xffffff);
-spotLight.position.set(-40, 60, -10);
+spotLight.position.set(-30, 60, 60);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
@@ -82,9 +71,9 @@ const controls = new (function () {
   this.opacity = meshMatelial.opacity;
   this.transparent = meshMatelial.transparent;
   this.visible = meshMatelial.visible;
+  this.emissive = meshMatelial.emissive.getHex();
   this.side = "front";
-  this.wireframe = meshMatelial.wireframe;
-  this.wireframeLinewidth = meshMatelial.wireframeLinewidth;
+  this.color = meshMatelial.color.getStyle();
   this.selectionMesh = "cube";
 })();
 
@@ -96,11 +85,8 @@ spGui.add(controls, "opacity", 0, 1).onChange(function (e) {
 spGui.add(controls, "transparent", 0, 1).onChange(function (e) {
   meshMatelial.transparent = e;
 });
-spGui.add(controls, "wireframe", 0, 1).onChange(function (e) {
-  meshMatelial.wireframe = e;
-});
-spGui.add(controls, "wireframeLinewidth", 0, 1).onChange(function (e) {
-  meshMatelial.wireframeLinewidth = e;
+spGui.add(controls, "emissive", 0, 1).onChange(function (e) {
+  meshMatelial.emissive = new THREE.Color(e);
 });
 spGui.add(controls, "visible", 0, 1).onChange(function (e) {
   meshMatelial.visible = e;
@@ -120,6 +106,10 @@ spGui.add(controls, "side", ["front", "back", "double"]).onChange(function (e) {
       meshMatelial.side = THREE.FrontSide;
       break;
   }
+  meshMatelial.needsUpdate = true;
+});
+spGui.addColor(controls, "color").onChange(function (e) {
+  meshMatelial.color.setStyle(e);
 });
 spGui.add(controls, "selectionMesh", ["cube", "sphere", "plane"]).onChange(function (e) {
   scene.remove(cube);
