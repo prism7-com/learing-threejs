@@ -36,11 +36,11 @@ scene.add(ground);
 const sphereGeometry = new THREE.SphereGeometry(14, 20, 20);
 const cubeGeometry = new THREE.BoxGeometry(15, 15, 15);
 const planeGeometry = new THREE.PlaneGeometry(14, 14, 4, 4);
-const meshMatelial = new THREE.MeshLambertMaterial({ color: 0x7777ff });
+const meshMaterial = new THREE.MeshPhongMaterial({ color: 0x7777ff });
 
-const sphere = new THREE.Mesh(sphereGeometry, meshMatelial);
-const cube = new THREE.Mesh(cubeGeometry, meshMatelial);
-const plane = new THREE.Mesh(planeGeometry, meshMatelial);
+const sphere = new THREE.Mesh(sphereGeometry, meshMaterial);
+const cube = new THREE.Mesh(cubeGeometry, meshMaterial);
+const plane = new THREE.Mesh(planeGeometry, meshMaterial);
 
 sphere.position.x = 0;
 sphere.position.y = 3;
@@ -56,60 +56,78 @@ cube.name = "Cube";
 plane.name = "Plane";
 scene.add(cube);
 
-// [Light]ambient light
-const ambientLight = new THREE.AmbientLight(0x0c0c0c);
-scene.add(ambientLight);
-
 // [Light]spot light
 const spotLight = new THREE.SpotLight(0xffffff);
-spotLight.position.set(-30, 60, 60);
+spotLight.position.set(0, 30, 60);
 spotLight.castShadow = true;
+spotLight.intensity = 0.6;
 scene.add(spotLight);
 
 // [Gui]GUI
 const controls = new (function () {
-  this.opacity = meshMatelial.opacity;
-  this.transparent = meshMatelial.transparent;
-  this.visible = meshMatelial.visible;
-  this.emissive = meshMatelial.emissive.getHex();
+  this.opacity = meshMaterial.opacity;
+  this.transparent = meshMaterial.transparent;
+  this.visible = meshMaterial.visible;
+  this.emissive = meshMaterial.emissive.getHex();
+  this.specular = meshMaterial.specular.getHex();
+  this.shininess = meshMaterial.shininess;
   this.side = "front";
-  this.color = meshMatelial.color.getStyle();
+  this.flatShading = "smooth";
+  this.color = meshMaterial.color.getStyle();
   this.selectionMesh = "cube";
 })();
 
 const gui = new dat.GUI();
 const spGui = gui.addFolder("Mesh");
 spGui.add(controls, "opacity", 0, 1).onChange(function (e) {
-  meshMatelial.opacity = e;
+  meshMaterial.opacity = e;
 });
-spGui.add(controls, "transparent", 0, 1).onChange(function (e) {
-  meshMatelial.transparent = e;
+spGui.add(controls, "transparent").onChange(function (e) {
+  meshMaterial.transparent = e;
 });
-spGui.add(controls, "emissive", 0, 1).onChange(function (e) {
-  meshMatelial.emissive = new THREE.Color(e);
+spGui.addColor(controls, "emissive").onChange(function (e) {
+  meshMaterial.emissive = new THREE.Color(e);
+});
+spGui.addColor(controls, "specular").onChange(function (e) {
+  meshMaterial.specular = new THREE.Color(e);
+});
+spGui.add(controls, "shininess", 0, 200).onChange(function (e) {
+  meshMaterial.shininess = e;
 });
 spGui.add(controls, "visible", 0, 1).onChange(function (e) {
-  meshMatelial.visible = e;
+  meshMaterial.visible = e;
 });
 spGui.add(controls, "side", ["front", "back", "double"]).onChange(function (e) {
   switch (e) {
     case "front":
-      meshMatelial.side = THREE.FrontSide;
+      meshMaterial.side = THREE.FrontSide;
       break;
     case "back":
-      meshMatelial.side = THREE.BackSide;
+      meshMaterial.side = THREE.BackSide;
       break;
     case "double":
-      meshMatelial.side = THREE.DoubleSide;
+      meshMaterial.side = THREE.DoubleSide;
       break;
     default:
-      meshMatelial.side = THREE.FrontSide;
+      meshMaterial.side = THREE.FrontSide;
       break;
   }
-  meshMatelial.needsUpdate = true;
+  meshMaterial.needsUpdate = true;
+});
+spGui.add(controls, "flatShading", ["flat", "smooth"]).onChange(function (e) {
+  console.log(e);
+  switch (e) {
+    case "flat":
+      meshMaterial.flatShading = true;
+      break;
+    case "smooth":
+      meshMaterial.flatShading = false;
+      break;
+  }
+  meshMaterial.needsUpdate = true;
 });
 spGui.addColor(controls, "color").onChange(function (e) {
-  meshMatelial.color.setStyle(e);
+  meshMaterial.color.setStyle(e);
 });
 spGui.add(controls, "selectionMesh", ["cube", "sphere", "plane"]).onChange(function (e) {
   scene.remove(cube);
