@@ -10,7 +10,7 @@ const stats = initStats();
 const scene = new THREE.Scene();
 
 // [Camera]カメラの作成
-let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 30, 170);
+let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.x = -50;
 camera.position.y = 40;
 camera.position.z = 50;
@@ -22,80 +22,127 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setClearColor(new THREE.Color(0xeeeeee));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.sortObjects = true;
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
+
+// [Mesh]床面
+const groundGeometry = new THREE.PlaneGeometry(100, 100, 4, 4);
+const ground = new THREE.Mesh(groundGeometry, new THREE.MeshBasicMaterial({ color: 0x777777 }));
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -20;
+ground.name = "Ground";
+scene.add(ground);
+
+// [Mesh]Sphere/Cube/Plane
+const sphereGeometry = new THREE.SphereGeometry(14, 20, 20);
+const cubeGeometry = new THREE.BoxGeometry(15, 15, 15);
+const planeGeometry = new THREE.PlaneGeometry(14, 14, 4, 4);
+const meshMatelial = new THREE.MeshNormalMaterial();
+
+const sphere = new THREE.Mesh(sphereGeometry, meshMatelial);
+const cube = new THREE.Mesh(cubeGeometry, meshMatelial);
+const plane = new THREE.Mesh(planeGeometry, meshMatelial);
+
+// NOTICE! Three.js r125 removed support for Geometry.
+// for (let f = 0, fl = sphere.geometry.faces.length; f < fl; f++) {
+//   const face = sphere.geometry.faces[f];
+//   const centroid = new THREE.Vector3(0, 0, 0);
+//   centroid.add(sphere.geometry.vertices[face.a]);
+//   centroid.add(sphere.geometry.vertices[face.b]);
+//   centroid.add(sphere.geometry.vertices[face.c]);
+//   centroid.divideScalar(3);
+//   const arrow = new THREE.ArrowHelper(face.normal, centroid, 2, 0x3333ff, 0.5, 0.5);
+// }
+
+sphere.position.x = 0;
+sphere.position.y = 3;
+sphere.position.z = 2;
+cube.position.x = 0;
+cube.position.y = 3;
+cube.position.z = 2;
+plane.position.x = 0;
+plane.position.y = 3;
+plane.position.z = 2;
+sphere.name = "Sphere";
+cube.name = "Cube";
+plane.name = "Plane";
+scene.add(cube);
+
+// [Light]ambient light
+const ambientLight = new THREE.AmbientLight(0x0c0c0c);
+scene.add(ambientLight);
+
+// [Light]spot light
+const spotLight = new THREE.SpotLight(0xffffff);
+spotLight.position.set(-40, 60, -10);
+spotLight.castShadow = true;
+scene.add(spotLight);
 
 // [Gui]GUI
 const controls = new (function () {
-  this.cubeCount = scene.children.length - 1;
-  this.cameraNear = camera.near;
-  this.cameraFar = camera.far;
-  this.rotationSpeed = 0.02;
-  this.numberOfObjects = scene.children.length;
-  this.color = 0x00ff00;
-
-  this.removeCube = function () {
-    const allChildren = scene.children;
-    const lastObject = allChildren[allChildren.length - 1];
-    if (lastObject instanceof THREE.Group) {
-      scene.remove(lastObject);
-      this.numberOfObjects = scene.children.length;
-      this.cubeCount = scene.children.length - 1;
-    }
-  };
-  this.addCube = function () {
-    const cubeSize = Math.ceil(3 + Math.random() * 3);
-    const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-    const cubeMaterial = new THREE.MeshDepthMaterial();
-    // const colorMaterial = new THREE.MeshLambertMaterial({
-    //   color: controls.color,
-    //   transparent: true,
-    //   blending: THREE.MultiplyBlending,
-    // });
-    const colorMaterial = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(controls.color),
-      transparent: true,
-      blending: THREE.MultiplyBlending,
-    });
-    const cube = SceneUtils.createMultiMaterialObject(cubeGeometry, [colorMaterial, cubeMaterial]);
-    cube.children[1].scale.set(0.99, 0.99, 0.99);
-    cube.castShadow = true;
-    cube.position.x = -60 + Math.round(Math.random() * 100);
-    cube.position.y = Math.round(Math.random() * 10);
-    cube.position.z = -100 + Math.round(Math.random() * 150);
-    cube.name = "Cube" + scene.children.length;
-    scene.add(cube);
-    this.numberOfObjects = scene.children.length;
-    this.cubeCount = scene.children.length - 1;
-  };
-  this.outputObjects = function () {
-    console.log(scene.children);
-  };
+  this.opacity = meshMatelial.opacity;
+  this.transparent = meshMatelial.transparent;
+  this.visible = meshMatelial.visible;
+  this.side = "front";
+  this.wireframe = meshMatelial.wireframe;
+  this.wireframeLinewidth = meshMatelial.wireframeLinewidth;
+  this.selectionMesh = "cube";
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "cubeCount").listen();
-gui.addColor(controls, "color");
-gui.add(controls, "rotationSpeed", 0, 0.5);
-gui.add(controls, "addCube");
-gui.add(controls, "removeCube");
-gui.add(controls, "cameraNear", 0, 50).onChange(function (e) {
-  camera.near = e;
-  camera.updateProjectionMatrix();
+const spGui = gui.addFolder("Mesh");
+spGui.add(controls, "opacity", 0, 1).onChange(function (e) {
+  meshMatelial.opacity = e;
 });
-gui.add(controls, "cameraFar", 100, 300).onChange(function (e) {
-  camera.far = e;
-  camera.updateProjectionMatrix();
+spGui.add(controls, "transparent", 0, 1).onChange(function (e) {
+  meshMatelial.transparent = e;
 });
-gui.add(controls, "outputObjects");
+spGui.add(controls, "wireframe", 0, 1).onChange(function (e) {
+  meshMatelial.wireframe = e;
+});
+spGui.add(controls, "wireframeLinewidth", 0, 1).onChange(function (e) {
+  meshMatelial.wireframeLinewidth = e;
+});
+spGui.add(controls, "visible", 0, 1).onChange(function (e) {
+  meshMatelial.visible = e;
+});
+spGui.add(controls, "side", ["front", "back", "double"]).onChange(function (e) {
+  switch (e) {
+    case "front":
+      meshMatelial.side = THREE.FrontSide;
+      break;
+    case "back":
+      meshMatelial.side = THREE.BackSide;
+      break;
+    case "double":
+      meshMatelial.side = THREE.DoubleSide;
+      break;
+    default:
+      meshMatelial.side = THREE.FrontSide;
+      break;
+  }
+});
+spGui.add(controls, "selectionMesh", ["cube", "sphere", "plane"]).onChange(function (e) {
+  scene.remove(cube);
+  scene.remove(sphere);
+  scene.remove(plane);
 
-// キューブ初期配置
-let i = 0;
-while (i < 10) {
-  console.log("Cube", i);
-  controls.addCube();
-  i++;
-}
+  switch (e) {
+    case "cube":
+      scene.add(cube);
+      break;
+    case "sphere":
+      scene.add(sphere);
+      break;
+    case "plane":
+      scene.add(plane);
+      break;
+    default:
+      scene.add(cube);
+      break;
+  }
+});
+
+let step = 0;
 
 // レンダリング
 renderScene();
@@ -107,13 +154,10 @@ function renderScene() {
   stats.update();
 
   // mesh animation
-  scene.traverse(function (e) {
-    if (e instanceof THREE.Mesh) {
-      e.rotation.x += controls.rotationSpeed;
-      e.rotation.y += controls.rotationSpeed;
-      e.rotation.z += controls.rotationSpeed;
-    }
-  });
+  step += 0.01;
+  cube.rotation.y = step;
+  plane.rotation.y = step;
+  sphere.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
