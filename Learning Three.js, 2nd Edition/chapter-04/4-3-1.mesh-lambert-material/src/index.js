@@ -85,10 +85,10 @@ spGui.add(controls, "opacity", 0, 1).onChange(function (e) {
 spGui.add(controls, "transparent", 0, 1).onChange(function (e) {
   meshMatelial.transparent = e;
 });
-spGui.add(controls, "emissive", 0, 1).onChange(function (e) {
+spGui.addColor(controls, "emissive").onChange(function (e) {
   meshMatelial.emissive = new THREE.Color(e);
 });
-spGui.add(controls, "visible", 0, 1).onChange(function (e) {
+spGui.add(controls, "visible").onChange(function (e) {
   meshMatelial.visible = e;
 });
 spGui.add(controls, "side", ["front", "back", "double"]).onChange(function (e) {
