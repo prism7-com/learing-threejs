@@ -1,13 +1,13 @@
 import * as THREE from "three";
 import Stats from "stats.js";
 import * as dat from "dat.gui";
-import vertexShader from "shader/vertex-shader.vert";
-import fragmentShader1 from "shader/fragment-shader-1.frag";
-import fragmentShader2 from "shader/fragment-shader-2.frag";
-import fragmentShader3 from "shader/fragment-shader-3.frag";
-import fragmentShader4 from "shader/fragment-shader-4.frag";
-import fragmentShader5 from "shader/fragment-shader-5.frag";
-import fragmentShader6 from "shader/fragment-shader-6.frag";
+import vertexShader from "./shader/vertex-shader.vert";
+import fragmentShader1 from "./shader/fragment-shader-1.frag";
+import fragmentShader2 from "./shader/fragment-shader-2.frag";
+import fragmentShader3 from "./shader/fragment-shader-3.frag";
+import fragmentShader4 from "./shader/fragment-shader-4.frag";
+import fragmentShader5 from "./shader/fragment-shader-5.frag";
+import fragmentShader6 from "./shader/fragment-shader-6.frag";
 
 // 統計情報の追加
 const stats = initStats();
@@ -56,7 +56,7 @@ scene.add(ambientLight);
 
 // [Light]spot light
 const spotLight = new THREE.SpotLight(0xffffff);
-spotLight.position.set(-40, 30, -10);
+spotLight.position.set(-40, 60, -10);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
@@ -76,7 +76,7 @@ function renderScene() {
   cube.rotation.x = step;
   cube.rotation.y = step;
   cube.rotation.z = step;
-  cube.material.materials.forEach(function (e) {
+  cube.material.forEach(function (e) {
     e.uniforms.time.value += 0.01;
   });
 
