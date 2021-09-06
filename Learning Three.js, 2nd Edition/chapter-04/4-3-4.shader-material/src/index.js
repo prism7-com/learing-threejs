@@ -30,14 +30,6 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
-// [Mesh]床面
-// const groundGeometry = new THREE.PlaneGeometry(100, 100, 4, 4);
-// const ground = new THREE.Mesh(groundGeometry, new THREE.MeshBasicMaterial({ color: 0x555555 }));
-// ground.rotation.x = -Math.PI / 2;
-// ground.position.y = -20;
-// ground.name = "Ground";
-// scene.add(ground);
-
 // [Mesh]Sphere/Cube/Plane
 const cubeGeometry = new THREE.BoxGeometry(20, 20, 20);
 const meshMaterial1 = new createMaterial(vertexShader, fragmentShader1);
