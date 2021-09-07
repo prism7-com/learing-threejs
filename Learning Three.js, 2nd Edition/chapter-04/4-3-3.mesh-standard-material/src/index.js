@@ -32,29 +32,13 @@ ground.position.y = -20;
 ground.name = "Ground";
 scene.add(ground);
 
-// [Mesh]Sphere/Cube/Plane
-const sphereGeometry = new THREE.SphereGeometry(14, 20, 20);
-const cubeGeometry = new THREE.BoxGeometry(15, 15, 15);
-const planeGeometry = new THREE.PlaneGeometry(14, 14, 4, 4);
-const meshMaterial = new THREE.MeshPhongMaterial({ color: 0x7777ff });
-
-const sphere = new THREE.Mesh(sphereGeometry, meshMaterial);
-const cube = new THREE.Mesh(cubeGeometry, meshMaterial);
-const plane = new THREE.Mesh(planeGeometry, meshMaterial);
-
-sphere.position.x = 0;
-sphere.position.y = 3;
-sphere.position.z = 2;
-cube.position.x = 0;
-cube.position.y = 3;
-cube.position.z = 2;
-plane.position.x = 0;
-plane.position.y = 3;
-plane.position.z = 2;
-sphere.name = "Sphere";
-cube.name = "Cube";
-plane.name = "Plane";
-scene.add(cube);
+// [Mesh]TorusKnot
+const meshGeometry = new THREE.TorusKnotGeometry(10, 2, 200, 20);
+const meshMaterial = new THREE.MeshStandardMaterial({ color: 0x7777ff });
+const mesh = new THREE.Mesh(meshGeometry, meshMaterial);
+mesh.position.set(0, 3, 2);
+mesh.name = "TorusKnot";
+scene.add(mesh);
 
 // [Light]spot light
 const spotLight = new THREE.SpotLight(0xffffff);
@@ -68,13 +52,11 @@ const controls = new (function () {
   this.opacity = meshMaterial.opacity;
   this.transparent = meshMaterial.transparent;
   this.visible = meshMaterial.visible;
-  this.emissive = meshMaterial.emissive.getHex();
-  this.specular = meshMaterial.specular.getHex();
-  this.shininess = meshMaterial.shininess;
+  this.roughness = meshMaterial.roughness;
+  this.metalness = meshMaterial.metalness;
   this.side = "front";
   this.flatShading = "smooth";
   this.color = meshMaterial.color.getStyle();
-  this.selectionMesh = "cube";
 })();
 
 const gui = new dat.GUI();
@@ -85,17 +67,14 @@ spGui.add(controls, "opacity", 0, 1).onChange(function (e) {
 spGui.add(controls, "transparent").onChange(function (e) {
   meshMaterial.transparent = e;
 });
-spGui.addColor(controls, "emissive").onChange(function (e) {
-  meshMaterial.emissive = new THREE.Color(e);
-});
-spGui.addColor(controls, "specular").onChange(function (e) {
-  meshMaterial.specular = new THREE.Color(e);
-});
-spGui.add(controls, "shininess", 0, 200).onChange(function (e) {
-  meshMaterial.shininess = e;
-});
 spGui.add(controls, "visible", 0, 1).onChange(function (e) {
   meshMaterial.visible = e;
+});
+spGui.add(controls, "roughness", 0, 1.0).onChange(function (e) {
+  meshMaterial.roughness = e;
+});
+spGui.add(controls, "metalness", 0, 1.0).onChange(function (e) {
+  meshMaterial.metalness = e;
 });
 spGui.add(controls, "side", ["front", "back", "double"]).onChange(function (e) {
   switch (e) {
@@ -129,26 +108,6 @@ spGui.add(controls, "flatShading", ["flat", "smooth"]).onChange(function (e) {
 spGui.addColor(controls, "color").onChange(function (e) {
   meshMaterial.color.setStyle(e);
 });
-spGui.add(controls, "selectionMesh", ["cube", "sphere", "plane"]).onChange(function (e) {
-  scene.remove(cube);
-  scene.remove(sphere);
-  scene.remove(plane);
-
-  switch (e) {
-    case "cube":
-      scene.add(cube);
-      break;
-    case "sphere":
-      scene.add(sphere);
-      break;
-    case "plane":
-      scene.add(plane);
-      break;
-    default:
-      scene.add(cube);
-      break;
-  }
-});
 
 let step = 0;
 
@@ -163,9 +122,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  cube.rotation.y = step;
-  plane.rotation.y = step;
-  sphere.rotation.y = step;
+  mesh.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
