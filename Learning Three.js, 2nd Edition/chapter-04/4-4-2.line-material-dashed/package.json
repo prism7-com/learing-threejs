@@ -1,0 +1,17 @@
+{
+  "name": "4-4-2.line-material-dashed",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@types/dat.gui": "^0.7.7",
+    "@types/stats": "^0.16.30",
+    "@types/three": "^0.131.0",
+    "dat.gui": "^0.7.7",
+    "stats.js": "^0.17.0",
+    "three": "^0.131.3"
+  },
+  "scripts": {
+    "start": "parcel serve src/index.html --port 3000"
+  }
+}
