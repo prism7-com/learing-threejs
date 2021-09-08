@@ -36,8 +36,12 @@ scene.add(spotLight);
 // [Line] mesh
 const points = gosper(4, 60);
 const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-const lineMaterial = new THREE.LineBasicMaterial({
+const lineMaterial = new THREE.LineDashedMaterial({
   vertexColors: true,
+  color: 0xffffff,
+  dashSize: 2,
+  gapSize: 2,
+  scale: 0.1,
 });
 
 const colors = [];
@@ -51,6 +55,7 @@ points.forEach(function (e) {
 lineGeometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
 
 const line = new THREE.Line(lineGeometry, lineMaterial);
+line.computeLineDistances();
 line.position.set(40, -70, -30);
 scene.add(line);
 
