@@ -31,42 +31,48 @@ spotLight.position.set(-40, 60, -10);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
-// [Mesh] knot
-let knot = createMesh(new THREE.TorusKnotGeometry(10, 1, 64, 8, 2, 3, 1));
-scene.add(knot);
+// [Mesh] polyhedron
+let polyhedron = createMesh(new THREE.IcosahedronGeometry(10, 0));
+scene.add(polyhedron);
 
 // [Gui]Gui
 const controls = new (function () {
-  this.radius = knot.children[0].geometry.parameters.radius;
-  this.tube = 0.3;
-  this.radialSegments = 100;
-  this.tubularSegments = 20;
-  this.p = knot.children[0].geometry.parameters.p;
-  this.q = knot.children[0].geometry.parameters.q;
+  this.radius = 10;
+  this.detail = 0;
+  this.type = "Icosahedron";
 
   this.redraw = function () {
-    scene.remove(knot);
-    knot = createMesh(
-      new THREE.TorusKnotGeometry(
-        controls.radius,
-        controls.tube,
-        Math.round(controls.radialSegments),
-        Math.round(controls.tubularSegments),
-        Math.round(controls.p),
-        Math.round(controls.q)
-      )
-    );
-    scene.add(knot);
+    scene.remove(polyhedron);
+    switch (controls.type) {
+      case "Icosahedron":
+        polyhedron = createMesh(new THREE.IcosahedronGeometry(controls.radius, controls.detail));
+        break;
+      case "Tetrahedron":
+        polyhedron = createMesh(new THREE.TetrahedronGeometry(controls.radius, controls.detail));
+        break;
+      case "Octahedron":
+        polyhedron = createMesh(new THREE.OctahedronGeometry(controls.radius, controls.detail));
+        break;
+      case "Dodecahedron":
+        polyhedron = createMesh(new THREE.DodecahedronGeometry(controls.radius, controls.detail));
+        break;
+      case "Custom":
+        var vertices = [1, 1, 1, -1, -1, 1, -1, 1, -1, 1, -1, -1];
+
+        var indices = [2, 1, 0, 0, 3, 2, 1, 3, 0, 2, 3, 1];
+
+        polyhedron = createMesh(new THREE.PolyhedronGeometry(vertices, indices, controls.radius, controls.detail));
+        break;
+    }
+    scene.add(polyhedron);
   };
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "radius", 0, 40).onChange(controls.redraw);
-gui.add(controls, "tube", 0, 40).onChange(controls.redraw);
-gui.add(controls, "radialSegments", 0, 400).step(1).onChange(controls.redraw);
-gui.add(controls, "tubularSegments", 1, 20).step(1).onChange(controls.redraw);
-gui.add(controls, "p", 1, 10).step(1).onChange(controls.redraw);
-gui.add(controls, "q", 1, 15).step(1).onChange(controls.redraw);
+gui.add(controls, "radius", 0, 40).step(1).onChange(controls.redraw);
+gui.add(controls, "detail", 0, 3).step(1).onChange(controls.redraw);
+gui.add(controls, "type", ["Icosahedron", "Tetrahedron", "Octahedron", "Dodecahedron", "Custom"]).onChange(controls.redraw);
+
 let step = 0;
 
 // レンダリング
@@ -81,8 +87,8 @@ function createMesh(geometry) {
   meshMaterial.side = THREE.DoubleSide;
   const wireFrameMaterial = new THREE.MeshBasicMaterial();
   wireFrameMaterial.wireframe = true;
-  const knot = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
-  return knot;
+  const polyhedron = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
+  return polyhedron;
 }
 
 /**
@@ -93,7 +99,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  knot.rotation.y = step;
+  polyhedron.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
