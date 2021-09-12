@@ -12,9 +12,9 @@ const scene = new THREE.Scene();
 
 // [Camera]カメラの作成
 let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.x = -20;
-camera.position.y = 30;
-camera.position.z = 40;
+camera.position.x = -30;
+camera.position.y = 40;
+camera.position.z = 50;
 camera.lookAt(new THREE.Vector3(10, 0, 0));
 scene.add(camera);
 
@@ -31,46 +31,46 @@ spotLight.position.set(-40, 60, -10);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
-// [Mesh] sphere
-let sphere = createMesh(new THREE.SphereGeometry(4, 10, 10));
-scene.add(sphere);
+// [Mesh] cone
+let cone = createMesh(new THREE.ConeGeometry(20, 20));
+scene.add(cone);
 
 // [Gui]Gui
 const controls = new (function () {
-  this.radius = sphere.children[0].geometry.parameters.radius;
-  this.widthSegments = sphere.children[0].geometry.parameters.widthSegments;
-  this.heightSegments = sphere.children[0].geometry.parameters.heightSegments;
-  this.phiStart = 0;
-  this.phiLength = Math.PI * 2;
+  this.radius = 20;
+  this.height = 20;
+
+  this.radialSegments = 8;
+  this.heightSegments = 8;
+
+  this.openEnded = false;
+
   this.thetaStart = 0;
-  this.thetaLength = Math.PI;
+  this.thetaLength = 2 * Math.PI;
 
   this.redraw = function () {
-    // remove the old plane
-    scene.remove(sphere);
-    // create a new one
-    sphere = createMesh(
-      new THREE.SphereGeometry(
+    scene.remove(cone);
+    cone = createMesh(
+      new THREE.ConeGeometry(
         controls.radius,
-        controls.widthSegments,
+        controls.height,
+        controls.radialSegments,
         controls.heightSegments,
-        controls.phiStart,
-        controls.phiLength,
+        controls.openEnded,
         controls.thetaStart,
         controls.thetaLength
       )
     );
-    // add it to the scene.
-    scene.add(sphere);
+    scene.add(cone);
   };
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "radius", 0, 40).onChange(controls.redraw);
-gui.add(controls, "widthSegments", 0, 20).onChange(controls.redraw);
-gui.add(controls, "heightSegments", 0, 20).onChange(controls.redraw);
-gui.add(controls, "phiStart", 0, 2 * Math.PI).onChange(controls.redraw);
-gui.add(controls, "phiLength", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "radius", -40, 40).onChange(controls.redraw);
+gui.add(controls, "height", 0, 40).onChange(controls.redraw);
+gui.add(controls, "radialSegments", 1, 20).step(1).onChange(controls.redraw);
+gui.add(controls, "heightSegments", 1, 20).step(1).onChange(controls.redraw);
+gui.add(controls, "openEnded").onChange(controls.redraw);
 gui.add(controls, "thetaStart", 0, 2 * Math.PI).onChange(controls.redraw);
 gui.add(controls, "thetaLength", 0, 2 * Math.PI).onChange(controls.redraw);
 
@@ -88,8 +88,8 @@ function createMesh(geometry) {
   meshMaterial.side = THREE.DoubleSide;
   const wireFrameMaterial = new THREE.MeshBasicMaterial();
   wireFrameMaterial.wireframe = true;
-  const sphere = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
-  return sphere;
+  const cone = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
+  return cone;
 }
 
 /**
@@ -100,7 +100,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  sphere.rotation.y = step;
+  cone.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
