@@ -31,48 +31,33 @@ spotLight.position.set(-40, 60, -10);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
-// [Mesh] cone
-let cone = createMesh(new THREE.ConeGeometry(20, 20));
-scene.add(cone);
+// [Mesh] torus
+let torus = createMesh(new THREE.TorusGeometry(10, 10, 8, 6, Math.PI * 2));
+scene.add(torus);
 
 // [Gui]Gui
 const controls = new (function () {
-  this.radius = 20;
-  this.height = 20;
-
-  this.radialSegments = 8;
-  this.heightSegments = 8;
-
-  this.openEnded = false;
-
-  this.thetaStart = 0;
-  this.thetaLength = 2 * Math.PI;
+  this.radius = torus.children[0].geometry.parameters.radius;
+  this.tube = torus.children[0].geometry.parameters.tube;
+  this.radialSegments = torus.children[0].geometry.parameters.radialSegments;
+  this.tubularSegments = torus.children[0].geometry.parameters.tubularSegments;
+  this.arc = torus.children[0].geometry.parameters.arc;
 
   this.redraw = function () {
-    scene.remove(cone);
-    cone = createMesh(
-      new THREE.ConeGeometry(
-        controls.radius,
-        controls.height,
-        controls.radialSegments,
-        controls.heightSegments,
-        controls.openEnded,
-        controls.thetaStart,
-        controls.thetaLength
-      )
+    scene.remove(torus);
+    torus = createMesh(
+      new THREE.TorusGeometry(controls.radius, controls.tube, Math.round(controls.radialSegments), Math.round(controls.tubularSegments), controls.arc)
     );
-    scene.add(cone);
+    scene.add(torus);
   };
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "radius", -40, 40).onChange(controls.redraw);
-gui.add(controls, "height", 0, 40).onChange(controls.redraw);
-gui.add(controls, "radialSegments", 1, 20).step(1).onChange(controls.redraw);
-gui.add(controls, "heightSegments", 1, 20).step(1).onChange(controls.redraw);
-gui.add(controls, "openEnded").onChange(controls.redraw);
-gui.add(controls, "thetaStart", 0, 2 * Math.PI).onChange(controls.redraw);
-gui.add(controls, "thetaLength", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "radius", 0, 40).onChange(controls.redraw);
+gui.add(controls, "tube", 0, 40).onChange(controls.redraw);
+gui.add(controls, "radialSegments", 0, 40).onChange(controls.redraw);
+gui.add(controls, "tubularSegments", 1, 20).onChange(controls.redraw);
+gui.add(controls, "arc", 0, Math.PI * 2).onChange(controls.redraw);
 
 let step = 0;
 
@@ -88,8 +73,8 @@ function createMesh(geometry) {
   meshMaterial.side = THREE.DoubleSide;
   const wireFrameMaterial = new THREE.MeshBasicMaterial();
   wireFrameMaterial.wireframe = true;
-  const cone = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
-  return cone;
+  const torus = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
+  return torus;
 }
 
 /**
@@ -100,7 +85,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  cone.rotation.y = step;
+  torus.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
