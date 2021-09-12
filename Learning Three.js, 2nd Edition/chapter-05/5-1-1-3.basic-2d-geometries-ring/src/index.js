@@ -11,10 +11,10 @@ const scene = new THREE.Scene();
 
 // [Camera]カメラの作成
 let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.x = -20;
-camera.position.y = 30;
-camera.position.z = 40;
-camera.lookAt(scene.position);
+camera.position.x = -30;
+camera.position.y = 40;
+camera.position.z = 50;
+camera.lookAt(new THREE.Vector3(10, 0, 0));
 scene.add(camera);
 
 // [Renderer]レンダラ
@@ -24,35 +24,42 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
-// [Light]spot light
-const spotLight = new THREE.SpotLight(0xffffff);
-spotLight.position.set(-40, 60, -10);
-spotLight.castShadow = true;
-scene.add(spotLight);
-
-// [Mesh] circle
-let circle = createMesh(new THREE.CircleGeometry(4, 10, 0.3 * Math.PI * 2, 0.3 * Math.PI * 2));
-scene.add(circle);
+// [Mesh] torus
+let torus = createMesh(new THREE.RingGeometry());
+scene.add(torus);
 
 // [Gui]Gui
 const controls = new (function () {
-  this.radius = 4;
-  this.segments = 10;
-  this.thetaStart = 0.3 * Math.PI * 2;
-  this.thetaLength = 0.3 * Math.PI * 2;
+  this.innerRadius = 0;
+  this.outerRadius = 50;
+  this.thetaSegments = 8;
+  this.phiSegments = 8;
+  this.thetaStart = 0;
+  this.thetaLength = Math.PI * 2;
 
   this.redraw = function () {
-    scene.remove(circle);
-    circle = createMesh(new THREE.CircleGeometry(controls.radius, controls.segments, controls.thetaStart, controls.thetaLength));
-    scene.add(circle);
+    scene.remove(torus);
+    torus = createMesh(
+      new THREE.RingGeometry(
+        controls.innerRadius,
+        controls.outerRadius,
+        controls.thetaSegments,
+        controls.phiSegments,
+        controls.thetaStart,
+        controls.thetaLength
+      )
+    );
+    scene.add(torus);
   };
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "radius", 0, 40).onChange(controls.redraw);
-gui.add(controls, "segments", 0, 40).onChange(controls.redraw);
-gui.add(controls, "thetaStart", 0, 2 * Math.PI).onChange(controls.redraw);
-gui.add(controls, "thetaLength", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "innerRadius", 0, 40).onChange(controls.redraw);
+gui.add(controls, "outerRadius", 0, 100).onChange(controls.redraw);
+gui.add(controls, "thetaSegments", 1, 40).step(1).onChange(controls.redraw);
+gui.add(controls, "phiSegments", 1, 20).step(1).onChange(controls.redraw);
+gui.add(controls, "thetaStart", 0, Math.PI * 2).onChange(controls.redraw);
+gui.add(controls, "thetaLength", 0, Math.PI * 2).onChange(controls.redraw);
 
 let step = 0;
 
@@ -68,8 +75,8 @@ function createMesh(geometry) {
   meshMaterial.side = THREE.DoubleSide;
   const wireFrameMaterial = new THREE.MeshBasicMaterial();
   wireFrameMaterial.wireframe = true;
-  const circle = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
-  return circle;
+  const torus = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
+  return torus;
 }
 
 /**
@@ -80,7 +87,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  circle.rotation.y = step;
+  torus.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
