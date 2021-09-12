@@ -31,46 +31,48 @@ spotLight.position.set(-40, 60, -10);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
-// [Mesh] cube
-let cube = createMesh(new THREE.BoxGeometry(10, 10, 10, 1, 1, 1));
-scene.add(cube);
+// [Mesh] sphere
+let sphere = createMesh(new THREE.SphereGeometry(4, 10, 10));
+scene.add(sphere);
 
 // [Gui]Gui
 const controls = new (function () {
-  this.width = cube.children[0].geometry.parameters.width;
-  this.height = cube.children[0].geometry.parameters.height;
-  this.depth = cube.children[0].geometry.parameters.depth;
-
-  this.widthSegments = cube.children[0].geometry.parameters.widthSegments;
-  this.heightSegments = cube.children[0].geometry.parameters.heightSegments;
-  this.depthSegments = cube.children[0].geometry.parameters.depthSegments;
+  this.radius = sphere.children[0].geometry.parameters.radius;
+  this.widthSegments = sphere.children[0].geometry.parameters.widthSegments;
+  this.heightSegments = sphere.children[0].geometry.parameters.heightSegments;
+  this.phiStart = 0;
+  this.phiLength = Math.PI * 2;
+  this.thetaStart = 0;
+  this.thetaLength = Math.PI;
 
   this.redraw = function () {
     // remove the old plane
-    scene.remove(cube);
+    scene.remove(sphere);
     // create a new one
-    cube = createMesh(
-      new THREE.BoxGeometry(
-        controls.width,
-        controls.height,
-        controls.depth,
-        Math.round(controls.widthSegments),
-        Math.round(controls.heightSegments),
-        Math.round(controls.depthSegments)
+    sphere = createMesh(
+      new THREE.SphereGeometry(
+        controls.radius,
+        controls.widthSegments,
+        controls.heightSegments,
+        controls.phiStart,
+        controls.phiLength,
+        controls.thetaStart,
+        controls.thetaLength
       )
     );
     // add it to the scene.
-    scene.add(cube);
+    scene.add(sphere);
   };
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "width", 0, 40).onChange(controls.redraw);
-gui.add(controls, "height", 0, 40).onChange(controls.redraw);
-gui.add(controls, "depth", 0, 40).onChange(controls.redraw);
-gui.add(controls, "widthSegments", 0, 10).onChange(controls.redraw);
-gui.add(controls, "heightSegments", 0, 10).onChange(controls.redraw);
-gui.add(controls, "depthSegments", 0, 10).onChange(controls.redraw);
+gui.add(controls, "radius", 0, 40).onChange(controls.redraw);
+gui.add(controls, "widthSegments", 0, 20).onChange(controls.redraw);
+gui.add(controls, "heightSegments", 0, 20).onChange(controls.redraw);
+gui.add(controls, "phiStart", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "phiLength", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "thetaStart", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "thetaLength", 0, 2 * Math.PI).onChange(controls.redraw);
 
 let step = 0;
 
@@ -86,8 +88,8 @@ function createMesh(geometry) {
   meshMaterial.side = THREE.DoubleSide;
   const wireFrameMaterial = new THREE.MeshBasicMaterial();
   wireFrameMaterial.wireframe = true;
-  const cube = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
-  return cube;
+  const sphere = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
+  return sphere;
 }
 
 /**
@@ -98,7 +100,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  cube.rotation.y = step;
+  sphere.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
