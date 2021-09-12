@@ -11,9 +11,9 @@ const scene = new THREE.Scene();
 
 // [Camera]カメラの作成
 let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.x = -30;
-camera.position.y = 40;
-camera.position.z = 30;
+camera.position.x = -20;
+camera.position.y = 30;
+camera.position.z = 40;
 camera.lookAt(scene.position);
 scene.add(camera);
 
@@ -30,30 +30,29 @@ spotLight.position.set(-40, 60, -10);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
-// [Mesh] plane
-let plane = createMesh(new THREE.PlaneGeometry(10, 14, 4, 4));
-scene.add(plane);
+// [Mesh] circle
+let circle = createMesh(new THREE.CircleGeometry(4, 10, 0.3 * Math.PI * 2, 0.3 * Math.PI * 2));
+scene.add(circle);
 
 // [Gui]Gui
 const controls = new (function () {
-  this.width = plane.children[0].geometry.parameters.width;
-  this.height = plane.children[0].geometry.parameters.width;
-
-  this.widthSegments = plane.children[0].geometry.parameters.widthSegments;
-  this.heightSegments = plane.children[0].geometry.parameters.heightSegments;
+  this.radius = 4;
+  this.segments = 10;
+  this.thetaStart = 0.3 * Math.PI * 2;
+  this.thetaLength = 0.3 * Math.PI * 2;
 
   this.redraw = function () {
-    scene.remove(plane);
-    plane = createMesh(new THREE.PlaneGeometry(controls.width, controls.height, Math.round(controls.widthSegments), Math.round(controls.heightSegments)));
-    scene.add(plane);
+    scene.remove(circle);
+    circle = createMesh(new THREE.CircleGeometry(controls.radius, controls.segments, controls.thetaStart, controls.thetaLength));
+    scene.add(circle);
   };
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "width", 0, 40).onChange(controls.redraw);
-gui.add(controls, "height", 0, 40).onChange(controls.redraw);
-gui.add(controls, "widthSegments", 1, 10, 1).onChange(controls.redraw);
-gui.add(controls, "heightSegments", 1, 10, 1).onChange(controls.redraw);
+gui.add(controls, "radius", 0, 40).onChange(controls.redraw);
+gui.add(controls, "segments", 0, 40).onChange(controls.redraw);
+gui.add(controls, "thetaStart", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "thetaLength", 0, 2 * Math.PI).onChange(controls.redraw);
 
 let step = 0;
 
@@ -69,8 +68,8 @@ function createMesh(geometry) {
   meshMaterial.side = THREE.DoubleSide;
   const wireFrameMaterial = new THREE.MeshBasicMaterial();
   wireFrameMaterial.wireframe = true;
-  const plane = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
-  return plane;
+  const circle = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
+  return circle;
 }
 
 /**
@@ -81,7 +80,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  plane.rotation.y = step;
+  circle.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
