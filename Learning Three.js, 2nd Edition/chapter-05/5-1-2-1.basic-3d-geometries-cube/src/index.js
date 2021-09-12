@@ -12,9 +12,9 @@ const scene = new THREE.Scene();
 
 // [Camera]カメラの作成
 let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.x = -30;
-camera.position.y = 70;
-camera.position.z = 70;
+camera.position.x = -20;
+camera.position.y = 30;
+camera.position.z = 40;
 camera.lookAt(new THREE.Vector3(10, 0, 0));
 scene.add(camera);
 
@@ -31,74 +31,51 @@ spotLight.position.set(-40, 60, -10);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
-// [Mesh] shape
-let shape = createMesh(new THREE.ShapeGeometry(drawShape()));
-scene.add(shape);
+// [Mesh] cube
+let cube = createMesh(new THREE.BoxGeometry(10, 10, 10, 1, 1, 1));
+scene.add(cube);
 
 // [Gui]Gui
 const controls = new (function () {
-  this.asGeom = function () {
-    // remove the old plane
-    scene.remove(shape);
-    // create a new one
-    shape = createMesh(new THREE.ShapeGeometry(drawShape()));
-    // add it to the scene.
-    scene.add(shape);
-  };
+  this.width = cube.children[0].geometry.parameters.width;
+  this.height = cube.children[0].geometry.parameters.height;
+  this.depth = cube.children[0].geometry.parameters.depth;
 
-  this.asPoints = function () {
-    // remove the old plane
-    scene.remove(shape);
-    // create a new one
-    shape = createLine(drawShape(), false);
-    // add it to the scene.
-    scene.add(shape);
-  };
+  this.widthSegments = cube.children[0].geometry.parameters.widthSegments;
+  this.heightSegments = cube.children[0].geometry.parameters.heightSegments;
+  this.depthSegments = cube.children[0].geometry.parameters.depthSegments;
 
-  this.asSpacedPoints = function () {
+  this.redraw = function () {
     // remove the old plane
-    scene.remove(shape);
+    scene.remove(cube);
     // create a new one
-    shape = createLine(drawShape(), true);
+    cube = createMesh(
+      new THREE.BoxGeometry(
+        controls.width,
+        controls.height,
+        controls.depth,
+        Math.round(controls.widthSegments),
+        Math.round(controls.heightSegments),
+        Math.round(controls.depthSegments)
+      )
+    );
     // add it to the scene.
-    scene.add(shape);
+    scene.add(cube);
   };
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "asGeom");
-gui.add(controls, "asPoints");
-gui.add(controls, "asSpacedPoints");
+gui.add(controls, "width", 0, 40).onChange(controls.redraw);
+gui.add(controls, "height", 0, 40).onChange(controls.redraw);
+gui.add(controls, "depth", 0, 40).onChange(controls.redraw);
+gui.add(controls, "widthSegments", 0, 10).onChange(controls.redraw);
+gui.add(controls, "heightSegments", 0, 10).onChange(controls.redraw);
+gui.add(controls, "depthSegments", 0, 10).onChange(controls.redraw);
 
 let step = 0;
 
 // レンダリング
 renderScene();
-
-/**
- * シェイプの描画
- */
-function drawShape() {
-  const shape = new THREE.Shape();
-  shape.moveTo(10, 10);
-  shape.lineTo(10, 40);
-  shape.bezierCurveTo(15, 25, 25, 25, 30, 40);
-  shape.splineThru([new THREE.Vector2(32, 30), new THREE.Vector2(28, 20), new THREE.Vector2(30, 10)]);
-  shape.quadraticCurveTo(20, 15, 10, 10);
-
-  var hole1 = new THREE.Path();
-  hole1.absellipse(16, 24, 2, 3, 0, Math.PI * 2, true);
-  shape.holes.push(hole1);
-  const hole2 = new THREE.Path();
-  hole2.absellipse(23, 24, 2, 3, 0, Math.PI * 2, true);
-  shape.holes.push(hole2);
-
-  const hole3 = new THREE.Path();
-  hole3.absarc(20, 16, 2, 0, Math.PI, true);
-  shape.holes.push(hole3);
-
-  return shape;
-}
 
 /**
  * メッシュの作成
@@ -109,40 +86,8 @@ function createMesh(geometry) {
   meshMaterial.side = THREE.DoubleSide;
   const wireFrameMaterial = new THREE.MeshBasicMaterial();
   wireFrameMaterial.wireframe = true;
-  const shape = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
-  return shape;
-}
-
-/**
- * 線の作成
- * @param {Shape} shape
- * @param {*} spaced
- * @returns
- */
-function createLine(shape, spaced) {
-  if (!spaced) {
-    const points = shape.getPoints(10);
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const mesh = new THREE.Line(
-      geometry,
-      new THREE.LineBasicMaterial({
-        color: 0xff3333,
-        linewidth: 2,
-      })
-    );
-    return mesh;
-  } else {
-    const points = shape.getSpacedPoints(5);
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const mesh = new THREE.Line(
-      geometry,
-      new THREE.LineBasicMaterial({
-        color: 0xff3333,
-        linewidth: 2,
-      })
-    );
-    return mesh;
-  }
+  const cube = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
+  return cube;
 }
 
 /**
@@ -153,7 +98,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  shape.rotation.y = step;
+  cube.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
