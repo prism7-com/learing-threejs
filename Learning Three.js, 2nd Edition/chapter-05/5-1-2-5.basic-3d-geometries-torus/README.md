@@ -11,3 +11,4 @@ yarn start
 ## preview
 
 ![preview](document/screenshot.png)
+![preview](document/screenshot2.png)
