@@ -31,46 +31,49 @@ spotLight.position.set(-40, 60, -10);
 spotLight.castShadow = true;
 scene.add(spotLight);
 
-// [Mesh] sphere
-let sphere = createMesh(new THREE.SphereGeometry(4, 10, 10));
-scene.add(sphere);
+// [Mesh] cylinder
+let cylinder = createMesh(new THREE.CylinderGeometry(20, 20, 20));
+scene.add(cylinder);
 
 // [Gui]Gui
 const controls = new (function () {
-  this.radius = sphere.children[0].geometry.parameters.radius;
-  this.widthSegments = sphere.children[0].geometry.parameters.widthSegments;
-  this.heightSegments = sphere.children[0].geometry.parameters.heightSegments;
-  this.phiStart = 0;
-  this.phiLength = Math.PI * 2;
+  this.radiusTop = 20;
+  this.radiusBottom = 20;
+  this.height = 20;
+
+  this.radialSegments = 8;
+  this.heightSegments = 8;
+
+  this.openEnded = false;
+
   this.thetaStart = 0;
-  this.thetaLength = Math.PI;
+  this.thetaLength = 2 * Math.PI;
 
   this.redraw = function () {
-    // remove the old plane
-    scene.remove(sphere);
-    // create a new one
-    sphere = createMesh(
-      new THREE.SphereGeometry(
-        controls.radius,
-        controls.widthSegments,
+    scene.remove(cylinder);
+    cylinder = createMesh(
+      new THREE.CylinderGeometry(
+        controls.radiusTop,
+        controls.radiusBottom,
+        controls.height,
+        controls.radialSegments,
         controls.heightSegments,
-        controls.phiStart,
-        controls.phiLength,
+        controls.openEnded,
         controls.thetaStart,
         controls.thetaLength
       )
     );
-    // add it to the scene.
-    scene.add(sphere);
+    scene.add(cylinder);
   };
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "radius", 0, 40).onChange(controls.redraw);
-gui.add(controls, "widthSegments", 0, 20).onChange(controls.redraw);
-gui.add(controls, "heightSegments", 0, 20).onChange(controls.redraw);
-gui.add(controls, "phiStart", 0, 2 * Math.PI).onChange(controls.redraw);
-gui.add(controls, "phiLength", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "radiusTop", -40, 40).onChange(controls.redraw);
+gui.add(controls, "radiusBottom", -40, 40).onChange(controls.redraw);
+gui.add(controls, "height", 0, 40).onChange(controls.redraw);
+gui.add(controls, "radialSegments", 1, 20).step(1).onChange(controls.redraw);
+gui.add(controls, "heightSegments", 1, 20).step(1).onChange(controls.redraw);
+gui.add(controls, "openEnded").onChange(controls.redraw);
 gui.add(controls, "thetaStart", 0, 2 * Math.PI).onChange(controls.redraw);
 gui.add(controls, "thetaLength", 0, 2 * Math.PI).onChange(controls.redraw);
 
@@ -88,8 +91,8 @@ function createMesh(geometry) {
   meshMaterial.side = THREE.DoubleSide;
   const wireFrameMaterial = new THREE.MeshBasicMaterial();
   wireFrameMaterial.wireframe = true;
-  const sphere = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
-  return sphere;
+  const cylinder = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
+  return cylinder;
 }
 
 /**
@@ -100,7 +103,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  sphere.rotation.y = step;
+  cylinder.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
