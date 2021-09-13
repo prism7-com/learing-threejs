@@ -2,7 +2,7 @@ import * as THREE from "three";
 import Stats from "stats.js";
 import * as dat from "dat.gui";
 import { SceneUtils } from "three/examples/jsm/utils/SceneUtils";
-import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry";
+import { Shape, Sphere } from "three";
 
 // 統計情報の追加
 const stats = initStats();
@@ -13,9 +13,9 @@ const scene = new THREE.Scene();
 // [Camera]カメラの作成
 let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.x = -30;
-camera.position.y = 40;
-camera.position.z = 50;
-camera.lookAt(new THREE.Vector3(10, 0, 0));
+camera.position.y = 60;
+camera.position.z = 60;
+camera.lookAt(new THREE.Vector3(20, 20, 0));
 scene.add(camera);
 
 // [Renderer]レンダラ
@@ -25,57 +25,82 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
-let spGroup;
-let latheMesh;
+// [Light]spot light
+const spotLight = new THREE.SpotLight(0xffffff);
+spotLight.position.set(-40, 60, -10);
+spotLight.castShadow = true;
+scene.add(spotLight);
+
+// [Mesh] shape
+let shape = createMesh(new THREE.ShapeGeometry(drawShape()));
+scene.add(shape);
 
 // [Gui]Gui
 const controls = new (function () {
-  this.segments = 12;
-  this.phiStart = 0;
-  this.phiLength = 2 * Math.PI;
+  this.depth = 2;
+  this.bevelThickness = 2;
+  this.bevelSize = 0.5;
+  this.bevelEnabled = true;
+  this.bevelSegments = 3;
+  this.bevelEnabled = true;
+  this.curveSegments = 12;
+  this.steps = 1;
 
-  this.redraw = function () {
-    scene.remove(spGroup);
-    scene.remove(latheMesh);
-    generatePoints(controls.segments, controls.phiStart, controls.phiLength);
+  this.asGeom = function () {
+    scene.remove(shape);
+    var options = {
+      depth: controls.depth,
+      bevelThickness: controls.bevelThickness,
+      bevelSize: controls.bevelSize,
+      bevelSegments: controls.bevelSegments,
+      bevelEnabled: controls.bevelEnabled,
+      curveSegments: controls.curveSegments,
+      steps: controls.steps,
+    };
+
+    shape = createMesh(new THREE.ExtrudeGeometry(drawShape(), options));
+    scene.add(shape);
   };
 })();
 
-generatePoints(controls.segments, controls.phiStart, controls.phiLength);
-
 const gui = new dat.GUI();
-gui.add(controls, "segments", 0, 50).step(1).onChange(controls.redraw);
-gui.add(controls, "phiStart", 0, 2 * Math.PI).onChange(controls.redraw);
-gui.add(controls, "phiLength", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "depth", 0, 20).onChange(controls.asGeom);
+gui.add(controls, "bevelThickness", 0, 10).onChange(controls.asGeom);
+gui.add(controls, "bevelSize", 0, 10).onChange(controls.asGeom);
+gui.add(controls, "bevelSegments", 0, 30).step(1).onChange(controls.asGeom);
+gui.add(controls, "bevelEnabled").onChange(controls.asGeom);
+gui.add(controls, "curveSegments", 1, 30).step(1).onChange(controls.asGeom);
+gui.add(controls, "steps", 1, 5).step(1).onChange(controls.asGeom);
 
 let step = 0;
+controls.asGeom();
 
 // レンダリング
 renderScene();
 
-function generatePoints(segments, phiStart, phiLength) {
-  const points = [];
-  const height = 5;
-  const count = 30;
-  for (let i = 0; i < count; i++) {
-    points.push(new THREE.Vector2((Math.sin(i * 0.2) + Math.cos(i * 0.3)) * height + 12, i - count + count / 2));
-  }
+/**
+ * シェイプの描画
+ */
+function drawShape() {
+  const shape = new THREE.Shape();
+  shape.moveTo(10, 10);
+  shape.lineTo(10, 40);
+  shape.bezierCurveTo(15, 25, 25, 25, 30, 40);
+  shape.splineThru([new THREE.Vector2(32, 30), new THREE.Vector2(28, 20), new THREE.Vector2(30, 10)]);
+  shape.quadraticCurveTo(20, 15, 10, 10);
 
-  spGroup = new THREE.Group();
-  spGroup.rotation.y = -Math.PI / 2;
-  const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: false });
-  points.forEach(function (point) {
-    const spGeom = new THREE.SphereGeometry(0.2);
-    const spMesh = new THREE.Mesh(spGeom, material);
-    spMesh.position.set(point.x, point.y, 0);
-    spGroup.add(spMesh);
-  });
-  scene.add(spGroup);
+  var hole1 = new THREE.Path();
+  hole1.absellipse(16, 24, 2, 3, 0, Math.PI * 2, true);
+  shape.holes.push(hole1);
+  const hole2 = new THREE.Path();
+  hole2.absellipse(23, 24, 2, 3, 0, Math.PI * 2, true);
+  shape.holes.push(hole2);
 
-  const latheGeometry = new THREE.LatheGeometry(points, segments, phiStart, phiLength);
-  latheMesh = createMesh(latheGeometry);
+  const hole3 = new THREE.Path();
+  hole3.absarc(20, 16, 2, 0, Math.PI, true);
+  shape.holes.push(hole3);
 
-  scene.add(latheMesh);
+  return shape;
 }
 
 /**
@@ -83,12 +108,16 @@ function generatePoints(segments, phiStart, phiLength) {
  * @param {Geometry} geometry
  */
 function createMesh(geometry) {
-  const meshMaterial = new THREE.MeshNormalMaterial();
+  geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(-20, 0, 0));
+  const meshMaterial = new THREE.MeshNormalMaterial({
+    transparent: true,
+    opacity: 0.7,
+  });
   meshMaterial.side = THREE.DoubleSide;
-  const wireFrameMaterial = new THREE.MeshBasicMaterial();
-  wireFrameMaterial.wireframe = true;
-  const polyhedron = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMaterial]);
-  return polyhedron;
+  const wireFrameMat = new THREE.MeshBasicMaterial();
+  wireFrameMat.wireframe = true;
+  const mesh = SceneUtils.createMultiMaterialObject(geometry, [meshMaterial, wireFrameMat]);
+  return mesh;
 }
 
 /**
@@ -99,8 +128,7 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  spGroup.rotation.y = step;
-  latheMesh.rotation.y = step;
+  shape.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
