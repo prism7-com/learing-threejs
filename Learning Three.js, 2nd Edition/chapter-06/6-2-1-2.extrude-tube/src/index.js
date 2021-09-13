@@ -26,56 +26,68 @@ renderer.shadowMap.enabled = true;
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
 let spGroup;
-let latheMesh;
+let tubeMesh;
 
 // [Gui]Gui
 const controls = new (function () {
-  this.segments = 12;
-  this.phiStart = 0;
-  this.phiLength = 2 * Math.PI;
+  this.numberOfPoints = 5;
+  this.segments = 64;
+  this.radius = 1;
+  this.radiusSegments = 8;
+  this.closed = false;
+  this.taper = "no taper";
+  this.points = [];
+
+  this.newPoints = function () {
+    const points = [];
+    for (let i = 0; i < controls.numberOfPoints; i++) {
+      const randomX = -20 + Math.round(Math.random() * 50);
+      const randomY = -15 + Math.round(Math.random() * 40);
+      const randomZ = -20 + Math.round(Math.random() * 40);
+
+      points.push(new THREE.Vector3(randomX, randomY, randomZ));
+    }
+    controls.points = points;
+    controls.redraw();
+  };
 
   this.redraw = function () {
+    const taper = controls.taper === "sinusoidal" ? THREE.TubeGeometry.SinusoidalTaper : THREE.TubeGeometry.NoTaper;
     scene.remove(spGroup);
-    scene.remove(latheMesh);
-    generatePoints(controls.segments, controls.phiStart, controls.phiLength);
+    scene.remove(tubeMesh);
+    generatePoints(controls.points, controls.segments, controls.radius, controls.radiusSegments, controls.closed, taper);
   };
 })();
 
-generatePoints(controls.segments, controls.phiStart, controls.phiLength);
-
 const gui = new dat.GUI();
-gui.add(controls, "segments", 0, 50).step(1).onChange(controls.redraw);
-gui.add(controls, "phiStart", 0, 2 * Math.PI).onChange(controls.redraw);
-gui.add(controls, "phiLength", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "newPoints");
+gui.add(controls, "numberOfPoints", 2, 15).step(1).onChange(controls.newPoints);
+gui.add(controls, "segments", 1, 200).step(1).onChange(controls.redraw);
+gui.add(controls, "radius", 0, 10).onChange(controls.redraw);
+gui.add(controls, "radiusSegments", 1, 100).step(1).onChange(controls.redraw);
+gui.add(controls, "closed").onChange(controls.redraw);
+gui.add(controls, "taper", ["no taper", "sinusoidal"]).onChange(controls.redraw);
 
 let step = 0;
 
+controls.newPoints();
 // レンダリング
 renderScene();
 
-function generatePoints(segments, phiStart, phiLength) {
-  const points = [];
-  const height = 5;
-  const count = 30;
-  for (let i = 0; i < count; i++) {
-    points.push(new THREE.Vector2((Math.sin(i * 0.2) + Math.cos(i * 0.3)) * height + 12, i - count + count / 2));
-  }
-
-  spGroup = new THREE.Group();
-  spGroup.rotation.y = -Math.PI / 2;
+function generatePoints(points, segments, radius, radiusSegments, closed, taper) {
+  spGroup = new THREE.Object3D();
   const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: false });
   points.forEach(function (point) {
     const spGeom = new THREE.SphereGeometry(0.2);
     const spMesh = new THREE.Mesh(spGeom, material);
-    spMesh.position.set(point.x, point.y, 0);
+    spMesh.position.copy(point);
     spGroup.add(spMesh);
   });
   scene.add(spGroup);
 
-  const latheGeometry = new THREE.LatheGeometry(points, segments, phiStart, phiLength);
-  latheMesh = createMesh(latheGeometry);
-
-  scene.add(latheMesh);
+  const tubeGeometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), segments, radius, radiusSegments, closed, taper);
+  tubeMesh = createMesh(tubeGeometry);
+  scene.add(tubeMesh);
 }
 
 /**
@@ -100,7 +112,7 @@ function renderScene() {
   // mesh animation
   step += 0.01;
   spGroup.rotation.y = step;
-  latheMesh.rotation.y = step;
+  tubeMesh.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
