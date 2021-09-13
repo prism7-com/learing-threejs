@@ -26,49 +26,56 @@ renderer.shadowMap.enabled = true;
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
 let spGroup;
-let hullMesh;
-generatePoints();
+let latheMesh;
 
 // [Gui]Gui
 const controls = new (function () {
+  this.segments = 12;
+  this.phiStart = 0;
+  this.phiLength = 2 * Math.PI;
+
   this.redraw = function () {
     scene.remove(spGroup);
-    scene.remove(hullMesh);
-    generatePoints();
+    scene.remove(latheMesh);
+    generatePoints(controls.segments, controls.phiStart, controls.phiLength);
   };
 })();
 
+generatePoints(controls.segments, controls.phiStart, controls.phiLength);
+
 const gui = new dat.GUI();
-gui.add(controls, "redraw");
+gui.add(controls, "segments", 0, 50).step(1).onChange(controls.redraw);
+gui.add(controls, "phiStart", 0, 2 * Math.PI).onChange(controls.redraw);
+gui.add(controls, "phiLength", 0, 2 * Math.PI).onChange(controls.redraw);
 
 let step = 0;
 
 // レンダリング
 renderScene();
 
-function generatePoints() {
+function generatePoints(segments, phiStart, phiLength) {
   const points = [];
-  for (let i = 0; i < 20; i++) {
-    const randomX = -15 + Math.round(Math.random() * 30);
-    const randomY = -15 + Math.round(Math.random() * 30);
-    const randomZ = -15 + Math.round(Math.random() * 30);
-
-    points.push(new THREE.Vector3(randomX, randomY, randomZ));
+  const height = 5;
+  const count = 30;
+  for (let i = 0; i < count; i++) {
+    points.push(new THREE.Vector2((Math.sin(i * 0.2) + Math.cos(i * 0.3)) * height + 12, i - count + count / 2));
   }
 
   spGroup = new THREE.Group();
+  spGroup.rotation.y = -Math.PI / 2;
   const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: false });
   points.forEach(function (point) {
     const spGeom = new THREE.SphereGeometry(0.2);
     const spMesh = new THREE.Mesh(spGeom, material);
-    spMesh.position.copy(point);
+    spMesh.position.set(point.x, point.y, 0);
     spGroup.add(spMesh);
   });
   scene.add(spGroup);
 
-  const hullGeometry = new ConvexGeometry(points);
-  hullMesh = createMesh(hullGeometry);
-  scene.add(hullMesh);
+  const latheGeometry = new THREE.LatheGeometry(points, segments, phiStart, phiLength);
+  latheMesh = createMesh(latheGeometry);
+
+  scene.add(latheMesh);
 }
 
 /**
@@ -93,7 +100,7 @@ function renderScene() {
   // mesh animation
   step += 0.01;
   spGroup.rotation.y = step;
-  hullMesh.rotation.y = step;
+  latheMesh.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
