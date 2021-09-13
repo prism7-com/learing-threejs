@@ -2,7 +2,7 @@ import * as THREE from "three";
 import Stats from "stats.js";
 import * as dat from "dat.gui";
 import { SceneUtils } from "three/examples/jsm/utils/SceneUtils";
-import { Shape, Sphere } from "three";
+import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry";
 
 // 統計情報の追加
 const stats = initStats();
@@ -25,58 +25,51 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
-// [Light]spot light
-const spotLight = new THREE.SpotLight(0xffffff);
-spotLight.position.set(-40, 60, -10);
-spotLight.castShadow = true;
-scene.add(spotLight);
-
-// [Mesh] polyhedron
-let polyhedron = createMesh(new THREE.IcosahedronGeometry(10, 0));
-scene.add(polyhedron);
+let spGroup;
+let hullMesh;
+generatePoints();
 
 // [Gui]Gui
 const controls = new (function () {
-  this.radius = 10;
-  this.detail = 0;
-  this.type = "Icosahedron";
-
   this.redraw = function () {
-    scene.remove(polyhedron);
-    switch (controls.type) {
-      case "Icosahedron":
-        polyhedron = createMesh(new THREE.IcosahedronGeometry(controls.radius, controls.detail));
-        break;
-      case "Tetrahedron":
-        polyhedron = createMesh(new THREE.TetrahedronGeometry(controls.radius, controls.detail));
-        break;
-      case "Octahedron":
-        polyhedron = createMesh(new THREE.OctahedronGeometry(controls.radius, controls.detail));
-        break;
-      case "Dodecahedron":
-        polyhedron = createMesh(new THREE.DodecahedronGeometry(controls.radius, controls.detail));
-        break;
-      case "Custom":
-        var vertices = [1, 1, 1, -1, -1, 1, -1, 1, -1, 1, -1, -1];
-
-        var indices = [2, 1, 0, 0, 3, 2, 1, 3, 0, 2, 3, 1];
-
-        polyhedron = createMesh(new THREE.PolyhedronGeometry(vertices, indices, controls.radius, controls.detail));
-        break;
-    }
-    scene.add(polyhedron);
+    scene.remove(spGroup);
+    scene.remove(hullMesh);
+    generatePoints();
   };
 })();
 
 const gui = new dat.GUI();
-gui.add(controls, "radius", 0, 40).step(1).onChange(controls.redraw);
-gui.add(controls, "detail", 0, 3).step(1).onChange(controls.redraw);
-gui.add(controls, "type", ["Icosahedron", "Tetrahedron", "Octahedron", "Dodecahedron", "Custom"]).onChange(controls.redraw);
+gui.add(controls, "redraw");
 
 let step = 0;
 
 // レンダリング
 renderScene();
+
+function generatePoints() {
+  const points = [];
+  for (let i = 0; i < 20; i++) {
+    const randomX = -15 + Math.round(Math.random() * 30);
+    const randomY = -15 + Math.round(Math.random() * 30);
+    const randomZ = -15 + Math.round(Math.random() * 30);
+
+    points.push(new THREE.Vector3(randomX, randomY, randomZ));
+  }
+
+  spGroup = new THREE.Group();
+  const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: false });
+  points.forEach(function (point) {
+    const spGeom = new THREE.SphereGeometry(0.2);
+    const spMesh = new THREE.Mesh(spGeom, material);
+    spMesh.position.copy(point);
+    spGroup.add(spMesh);
+  });
+  scene.add(spGroup);
+
+  const hullGeometry = new ConvexGeometry(points);
+  hullMesh = createMesh(hullGeometry);
+  scene.add(hullMesh);
+}
 
 /**
  * メッシュの作成
@@ -99,7 +92,8 @@ function renderScene() {
 
   // mesh animation
   step += 0.01;
-  polyhedron.rotation.y = step;
+  spGroup.rotation.y = step;
+  hullMesh.rotation.y = step;
 
   // requestAnimationFrameを利用してレンダリング（レンダリングタイミングをブラウザに任せる）
   requestAnimationFrame(renderScene);
